@@ -1,0 +1,94 @@
+version: '3.9'
+
+services:
+  # frontend:
+  #   image: ${FRONTEND}
+  #   restart: always
+  #   environment:
+  #     - API_URL=${API_URL}
+  #     - NODE_ENV=${NODE_ENV}
+  #   build: 
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: frontend_c
+  #   ports:
+  #     - '5000:5000'
+  #   networks:
+  #     - mynetwork
+
+  backend:
+    image: ${BACKEND}
+    restart: always
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DBNAME=${DBNAME}
+      - DBUSER=${DBUSER}
+      - DBPORT=${DBPORT}
+      - DBHOST=5432
+      - DBPASSWORD=${DBPASSWORD}
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    command: daphne -v 0 -b 0.0.0.0 -p 8000 kykam_agencies.asgi:application
+    volumes:
+      - static_volume:/app/staticfiles/
+      - media_volume:/app/mediafiles/
+    expose:
+      - 80
+    container_name: backend
+    ports:
+      - '8000:8000'
+    depends_on:
+      - db
+      - redis
+    networks:
+      - mynetwork
+
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: db
+    ports:
+      - '5434:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${DBNAME}
+      POSTGRES_USER: ${DBUSER}
+      POSTGRES_PASSWORD: ${DBPASSWORD}
+      DBHOST: ${DBHOST}
+      DBPORT: ${DBPORT}
+    networks:
+      - mynetwork
+
+  redis:
+    image: redis:alpine
+    restart: always
+    expose:
+      - 6379
+    networks:
+      - mynetwork
+
+  # nginx:
+  #   image: ${NGINX}
+  #   restart: always
+  #   build:
+  #     context: ./nginx
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - 80:80
+  #   volumes:
+  #     - static_volume:/app/staticfiles/
+  #     - media_volume:/app/mediafiles/
+  #   networks:
+  #     - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  pgdata: {}
+  static_volume: {}
+  media_volume: {}
