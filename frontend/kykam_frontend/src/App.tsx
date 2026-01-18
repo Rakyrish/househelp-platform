@@ -9,6 +9,9 @@ import Services from './pages/Home/services';
 import Why from './pages/Home/why';
 import RegisterWorker from "./auth/register/Worker";
 import RegisterEmployer from "./auth/register/Employer";
+import Worker from './components/worker';
+import Employer from './components/employer';
+import WorkerDirectory from "./pages/Dashboard/WorkerDirectory";
 
 
 function App() {
@@ -22,6 +25,10 @@ function App() {
         <Route path="/why" element={<Why />} />
         <Route path="/register/worker" element={<RegisterWorker />} />
         <Route path="/register/employer" element={<RegisterEmployer />} />
+        <Route path="/dashboard/worker" element={<Worker />} />
+        <Route path="/dashboard/employer" element={<Employer />} />
+        <Route path="/dashboard/workerDir" element={<WorkerDirectory />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Footer />
     </BrowserRouter>  
