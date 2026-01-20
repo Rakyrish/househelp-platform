@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const RegisterEmployer = () => {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState({ type: '', text: '' });
+  const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -186,7 +188,16 @@ const RegisterEmployer = () => {
             {loading ? "Processing..." : "Create Employer Account"}
           </button>
         </form>
+        <div className="mb-2 text-center">
+        <p className="text-sm text-gray-500">
+          Already have an account?{' '}
+          <a onClick={() => navigate('/login/employer')} className="text-blue-400 font-semibold hover:underline">
+            Log in here
+          </a>
+        </p>
       </div>
+      </div>
+      
     </div>
   );
 };

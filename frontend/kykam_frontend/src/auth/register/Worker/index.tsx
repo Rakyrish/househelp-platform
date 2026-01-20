@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { message } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -21,6 +22,7 @@ const RegisterWorker = () => {
 
   const [idFront, setIdFront] = useState<File | null>(null);
   const [idBack, setIdBack] = useState<File | null>(null);
+  const navigate = useNavigate();
 
   // 1. HELPER: Restrict input to numbers only in real-time
   const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,6 +233,12 @@ const RegisterWorker = () => {
             Register as Worker
           </button>
         </form>
+        <div>
+          <p className="text-center text-sm text-gray-500 mb-4">
+            Already have an account? <a  onClick={ () => navigate('/login/worker') } className="text-blue-600 font-medium hover:underline">Login here</a>
+          </p>
+
+        </div>
       </div>
     </div>
   );
