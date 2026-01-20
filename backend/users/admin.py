@@ -5,7 +5,7 @@ from .models import User
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     # What you see in the main list
-    list_display = ('username', 'full_name', 'role', 'id_number', 'display_id_front', 'is_verified')
+    list_display = ('username', 'full_name','phone', 'role', 'id_number', 'display_id_front', 'is_verified')
     list_filter = ('role', 'is_verified', 'location')
     search_fields = ('username', 'id_number', 'phone')
     list_editable = ('is_verified',) # Quick toggle verification without leaving the page
