@@ -1,3 +1,126 @@
+// import React, { useState, useEffect } from 'react';
+// import { Card, Avatar, Tag, Button, Input, Row, Col, Spin, message, Modal, Empty } from 'antd';
+// import { 
+//   UserOutlined, 
+//   EnvironmentOutlined, 
+//   StarFilled, 
+//   VerifiedOutlined,
+//   FilterOutlined,
+//   SearchOutlined
+// } from '@ant-design/icons';
+// import api from '../../api/axios'; // Use the secure instance
+
+// const WorkerDirectory = () => {
+//   const [workers, setWorkers] = useState<any[]>([]);
+//   const [loading, setLoading] = useState(true);
+//   const [search, setSearch] = useState('');
+
+//   useEffect(() => {
+//     const fetchWorkers = async () => {
+//       try {
+//         // Assume your backend has this endpoint for listing verified workers
+//         const res = await api.get('/users/workers/list/');
+//         setWorkers(res.data);
+//       } catch (err) {
+//         message.error("Could not load worker directory");
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchWorkers();
+//   }, []);
+
+//   const handleHire = (workerName: string) => {
+//     Modal.confirm({
+//       title: `Send Hire Request?`,
+//       content: `Would you like to send a booking request to ${workerName}? They will be notified immediately.`,
+//       onOk: () => {
+//         message.success(`Request sent to ${workerName}!`);
+//         // Here you would call api.post('/bookings/create/', { worker_id: ... })
+//       }
+//     });
+//   };
+
+//   const filteredWorkers = workers.filter(w => 
+//     w.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+//     w.worker_type?.toLowerCase().includes(search.toLowerCase())
+//   );
+
+//   if (loading) return <div className="h-screen flex justify-center items-center"><Spin tip="Loading specialized help..." size="large" /></div>;
+
+//   return (
+//     <div className="min-h-screen bg-[#f1f5f9] p-4 md:p-8">
+//       <div className="max-w-7xl mx-auto">
+//         <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+//           <h2 className="text-3xl font-bold text-slate-800">Available Workers</h2>
+//           <Input 
+//             placeholder="Search by name or skill (e.g. Nanny)" 
+//             prefix={<SearchOutlined />} 
+//             className="max-w-md h-12 rounded-xl shadow-sm"
+//             onChange={(e) => setSearch(e.target.value)}
+//           />
+//         </div>
+
+//         <Row gutter={[24, 24]}>
+//           {filteredWorkers.map((worker) => (
+//             <Col xs={24} sm={12} lg={8} key={worker.id}>
+//               <Card 
+//                 className="rounded-2xl border-none shadow-sm hover:shadow-md transition-all overflow-hidden"
+//                 bodyStyle={{ padding: 0 }}
+//               >
+//                 <div className="bg-orange-400 h-20" /> {/* Profile header accent */}
+//                 <div className="px-6 pb-6 -mt-10">
+//                   <Avatar 
+//                     size={80} 
+//                     src={worker.avatar_url} 
+//                     icon={<UserOutlined />} 
+//                     className="border-4 border-white shadow-md bg-white"
+//                   />
+//                   <div className="mt-4 flex justify-between items-start">
+//                     <div>
+//                       <h3 className="text-xl font-bold text-slate-800">
+//                         {worker.full_name} {worker.is_verified && <VerifiedOutlined className="text-blue-500 text-sm ml-1" />}
+//                       </h3>
+//                       <p className="text-slate-500 capitalize">{worker.worker_type?.replace('_', ' ')}</p>
+//                     </div>
+//                     <Tag color="orange" className="mr-0 rounded-full">KES {worker.rate || 'Negotiable'}</Tag>
+//                   </div>
+
+//                   <div className="mt-4 space-y-2">
+//                     <div className="flex items-center gap-2 text-slate-500 text-sm">
+//                       <EnvironmentOutlined /> {worker.location}
+//                     </div>
+//                     <div className="flex items-center gap-2 text-amber-500 text-sm">
+//                       <StarFilled /> 4.8 (12 Reviews)
+//                     </div>
+//                   </div>
+
+//                   <div className="mt-6 flex gap-2">
+//                     <Button block className="rounded-lg h-10 font-medium">View Profile</Button>
+//                     <Button 
+//                       block 
+//                       type="primary" 
+//                       className="bg-[#f3a82f] hover:bg-orange-600 border-none rounded-lg h-10 font-bold"
+//                       onClick={() => handleHire(worker.full_name)}
+//                     >
+//                       Hire Now
+//                     </Button>
+//                   </div>
+//                 </div>
+//               </Card>
+//             </Col>
+//           ))}
+//         </Row>
+
+//         {filteredWorkers.length === 0 && (
+//           <Empty description="No workers found matching your search." className="mt-20" />
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default WorkerDirectory;
 import React, { useState, useEffect } from 'react';
 import { Card, Tag, Badge, Input, Select, Row, Col, Avatar, Button, Spin } from 'antd';
 import { 
