@@ -44,12 +44,10 @@ class User(AbstractUser):
         null=True,
         blank=True
     )
-
     phone = models.CharField(max_length=20)
     location = models.CharField(max_length=100, blank=True, null=True)
     age = models.CharField(max_length=3, blank=True, null=True)
     family_size = models.CharField(max_length=20, blank=True, null=True)
-
     # --- TRACEABILITY FIELDS ---
     id_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
     id_photo_front = models.ImageField(upload_to='identity/front/', null=True, blank=True)

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 # from django.contrib.auth import get_user_model
 from .models import User
+from django.contrib.auth import authenticate
+from rest_framework import serializers
 
 # User = get_user_model()
 
@@ -64,3 +66,56 @@ class RegisterEmployerSerializer(serializers.ModelSerializer):
             **validated_data
         )
         return user
+    
+class LoginWorkerSerializer(serializers.ModelSerializer): 
+    # We redefine these to ensure they show up as simple inputs in the HTML form
+    phone = serializers.CharField(label="Phone Number")
+    password = serializers.CharField(
+        style={'input_type': 'password'}, 
+        write_only=True
+    )
+
+    class Meta:
+        model = User
+        fields = ['phone', 'password'] # Moved inside Meta
+
+    def validate(self, data):
+        phone = data.get('phone')
+        password = data.get('password')
+
+        # Using username=phone because the custom backend expects 'username'
+        user = authenticate(username=phone, password=password)
+
+        if not user:
+            raise serializers.ValidationError("Invalid phone number or password.")
+
+        if user.role != 'worker':
+            raise serializers.ValidationError("Access denied. This account is not a Worker.")
+
+        return user
+
+class LoginEmployerSerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(label="Phone Number")
+    password = serializers.CharField(
+        style={'input_type': 'password'}, 
+        write_only=True
+    )
+
+    class Meta:
+        model = User
+        fields = ['phone', 'password'] 
+
+    def validate(self, data):
+        phone = data.get('phone')
+        password = data.get('password')
+
+        user = authenticate(username=phone, password=password)
+
+        if not user:
+            raise serializers.ValidationError("Invalid phone number or password.")
+
+        if user.role != 'employer':
+            raise serializers.ValidationError("Access denied. This account is not an Employer.")
+
+        return user
+
