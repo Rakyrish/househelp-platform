@@ -7,6 +7,7 @@ class User(AbstractUser):
     ROLE_CHOICES = (
         ('employer', 'Employer'),
         ('worker', 'Worker'),
+        ('admin', 'Admin'),
     )
 
     GENDER_CHOICES = (
@@ -24,7 +25,13 @@ class User(AbstractUser):
         ('elderly', 'Elderly Care'),
         ('other', 'Other'),
     )
-
+  
+    STATUS_CHOICES = (
+        ('pending', 'Pending Verification'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('banned', 'Banned'),
+    )
 
     # --- BASIC INFO ---
     gender = models.CharField(
@@ -44,6 +51,8 @@ class User(AbstractUser):
         null=True,
         blank=True
     )
+    is_deleted = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     phone = models.CharField(max_length=20)
     location = models.CharField(max_length=100, blank=True, null=True)
     age = models.CharField(max_length=3, blank=True, null=True)
@@ -80,3 +89,24 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.role})"
+class VerificationLog(models.Model):
+    # Link to the worker being verified
+    worker = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='verification_history'
+    )
+    # Link to the admin who performed the action
+    admin = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='performed_actions'
+    )
+    action = models.CharField(max_length=20) # 'approved', 'rejected', etc.
+    rejection_reasons = models.JSONField(null=True, blank=True)
+    comment = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.worker.username} - {self.action} on {self.created_at.date()}"

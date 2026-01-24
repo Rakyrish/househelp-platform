@@ -60,11 +60,11 @@ const RegisterEmployer = () => {
     const { confirm_password, ...payload } = formData;
 
     try {
-      await axios.post(`${API}/users/register/employer/`, payload);
+      await axios.post(`${API}/api/register/employer/`, payload);
 
       message.success('Registration Successful!');
       setMessages({ type: 'success', text: 'Account created! Redirecting to login...' });
-
+         navigate('/login/employer')
       // Reset form
       setFormData({
         full_name: '',
