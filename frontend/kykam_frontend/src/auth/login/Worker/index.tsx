@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../context/AuthContext"; 
+import { useAuth } from "../../../context/AuthContext";
 import { message } from "antd";
 
 function WorkerLogin() {
   const navigate = useNavigate();
-  const { login } = useAuth(); 
+  const { login } = useAuth();
 
   // 1. State for form inputs and errors
   const [formData, setFormData] = useState({ phone: "", password: "" });
@@ -24,11 +24,17 @@ function WorkerLogin() {
     setLoading(true);
 
     try {
-      await login(formData.phone, formData.password, "worker");
+      await login({
+        phone: formData.phone,
+        password: formData.password,
+        type: "worker",
+      });
+
       message.success("Login successful!");
+      navigate("/dashboard/worker");
     } catch (err: any) {
       setError(err || "Invalid credentials. Please try again.");
-      message.error( "Login failed. Please check your credentials.");
+      message.error("Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -39,8 +45,18 @@ function WorkerLogin() {
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
         <div>
           <div className="mx-auto h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
-            <svg className="h-8 w-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg
+              className="h-8 w-8 text-orange-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
             </svg>
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
@@ -61,7 +77,10 @@ function WorkerLogin() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Phone Number
               </label>
               <input
@@ -76,7 +95,10 @@ function WorkerLogin() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Password
               </label>
               <input
@@ -99,13 +121,19 @@ function WorkerLogin() {
                 type="checkbox"
                 className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+              <label
+                htmlFor="remember-me"
+                className="ml-2 block text-sm text-gray-900"
+              >
                 Remember me
               </label>
             </div>
 
             <div className="text-sm">
-              <button type="button" className="font-medium text-blue-600 hover:text-orange-500">
+              <button
+                type="button"
+                className="font-medium text-blue-600 hover:text-orange-500"
+              >
                 Forgot password?
               </button>
             </div>
@@ -116,7 +144,9 @@ function WorkerLogin() {
               type="submit"
               disabled={loading}
               className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white transition-colors shadow-md ${
-                loading ? "bg-orange-400 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-700"
+                loading
+                  ? "bg-orange-400 cursor-not-allowed"
+                  : "bg-orange-600 hover:bg-orange-700"
               }`}
             >
               {loading ? "Signing in..." : "Sign In"}
@@ -126,9 +156,9 @@ function WorkerLogin() {
 
         <div className="pt-4">
           <p className="text-center text-sm text-gray-600">
-            Don't have an account?{' '}
+            Don't have an account?{" "}
             <button
-              onClick={() => navigate('/register/worker')}
+              onClick={() => navigate("/register/worker")}
               className="font-semibold text-blue-600 hover:underline focus:outline-none"
             >
               Register here
