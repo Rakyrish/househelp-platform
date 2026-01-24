@@ -19,22 +19,25 @@ services:
   backend:
     image: ${BACKEND}
     restart: always
+    user: root
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - DBNAME=${DBNAME}
       - DBUSER=${DBUSER}
       - DBPORT=${DBPORT}
-      - DBHOST=5432
+      - DBHOST=db
       - DBPASSWORD=${DBPASSWORD}
     build: 
       context: ./backend
       dockerfile: Dockerfile
+    # --- CHANGE 1: Update path to point to the module inside the backend folder ---
     command: daphne -v 0 -b 0.0.0.0 -p 8000 kykam_agencies.asgi:application
+    # --- CHANGE 2: Update volumes to map specifically to the backend folder ---
     volumes:
+      - ./backend:/app           # Map the 'backend' folder contents to '/app'
+      - ./media:/app/media       # Keep your media mapping
       - static_volume:/app/staticfiles/
-      - media_volume:/app/mediafiles/
-    expose:
-      - 80
+    working_dir: /app            # Ensure Docker executes from /app
     container_name: backend
     ports:
       - '8000:8000'

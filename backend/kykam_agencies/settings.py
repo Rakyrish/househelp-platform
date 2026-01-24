@@ -93,18 +93,35 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Static files (CSS, JavaScript, Images)
+# Static files
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    BASE_DIR / 'static',
 ]
 
-# Media files (ID Photos, Profile pics)
+# Media files - User uploads
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media' # Using the / operator is cleaner with Path objects
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Allows your React app to display media/site content in iframes
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# settings.py
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_USER') 
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD') 
+DEFAULT_FROM_EMAIL = f"Kykam Agencies <{os.getenv('EMAIL_USER')}>"
+# settings.py
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

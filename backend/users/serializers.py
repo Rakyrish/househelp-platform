@@ -118,4 +118,37 @@ class LoginEmployerSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Access denied. This account is not an Employer.")
 
         return user
+    
+
+class LoginAdminSerializer(serializers.Serializer):
+    phone = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+    class Meta:
+        model = User
+        fields = ['phone', 'password']
+
+    def validate(self, data):
+        phone = data.get("phone")
+        password = data.get("password")
+
+        user = authenticate(username=phone, password=password)
+
+        if not user:
+            raise serializers.ValidationError("Invalid phone number or password.")
+
+        if user.role != "admin":
+            raise serializers.ValidationError(
+                "Access denied. This account is not an Admin."
+            )
+
+        return user
+class AdminUserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 'phone', 
+            'role', 'status', 'is_verified', 'id_number', 
+            'id_photo_front', 'id_photo_back', 'location', 
+            'kin_name', 'kin_phone', 'worker_type', 'date_joined'
+        ]
 

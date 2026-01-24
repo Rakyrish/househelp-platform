@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../context/AuthContext"; // Ensure this path matches your folder structure
+import { useAuth } from "../../../context/AuthContext"; 
+import { message } from "antd";
 
 function EmployerLogin() {
   const navigate = useNavigate();
@@ -24,12 +25,19 @@ function EmployerLogin() {
 
     try {
       // Passes 'employer' type to hit the Employer login endpoint in Django
-      await login(formData.phone, formData.password, "employer");
+      await login({
+        phone: formData.phone,
+        password: formData.password,
+        type: "employer",
+      });
+      message.success("Login successful!");
+      navigate("/dashboard/employer");
     } catch (err: any) {
       // FIX: Extract the string message to prevent the "Objects are not valid" error
-      const message = err.response?.data?.detail || 
-                      err.response?.data?.non_field_errors?.[0] || 
-                      "Invalid phone number or password.";
+      const message =
+        err.response?.data?.detail ||
+        err.response?.data?.non_field_errors?.[0] ||
+        "Invalid phone number or password.";
       setError(message);
     } finally {
       setLoading(false);
@@ -41,8 +49,18 @@ function EmployerLogin() {
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-xl border border-slate-100">
         <div>
           <div className="mx-auto h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
-            <svg className="h-8 w-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            <svg
+              className="h-8 w-8 text-orange-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              />
             </svg>
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-slate-900">
@@ -63,7 +81,10 @@ function EmployerLogin() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1">
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium text-slate-700 mb-1"
+              >
                 Phone Number
               </label>
               <input
@@ -78,7 +99,10 @@ function EmployerLogin() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-slate-700 mb-1"
+              >
                 Password
               </label>
               <input
@@ -101,12 +125,18 @@ function EmployerLogin() {
                 type="checkbox"
                 className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-slate-300 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-900">
+              <label
+                htmlFor="remember-me"
+                className="ml-2 block text-sm text-slate-900"
+              >
                 Remember my company
               </label>
             </div>
             <div className="text-sm">
-              <button type="button" className="font-medium text-orange-600 hover:text-orange-500">
+              <button
+                type="button"
+                className="font-medium text-orange-600 hover:text-orange-500"
+              >
                 Forgot password?
               </button>
             </div>
@@ -117,7 +147,9 @@ function EmployerLogin() {
               type="submit"
               disabled={loading}
               className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white transition-colors shadow-md ${
-                loading ? "bg-orange-400 cursor-not-allowed" : "bg-orange-600 hover:bg-orange-700"
+                loading
+                  ? "bg-orange-400 cursor-not-allowed"
+                  : "bg-orange-600 hover:bg-orange-700"
               }`}
             >
               {loading ? "Verifying..." : "Log in to Dashboard"}
@@ -127,9 +159,9 @@ function EmployerLogin() {
 
         <div className="pt-4 border-t border-slate-100">
           <p className="text-center text-sm text-slate-600">
-            New to the platform?{' '}
+            New to the platform?{" "}
             <button
-              onClick={() => navigate('/register/employer')}
+              onClick={() => navigate("/register/employer")}
               className="font-semibold text-orange-600 hover:underline focus:outline-none"
             >
               Create an Employer Account
