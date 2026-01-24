@@ -74,9 +74,10 @@ const RegisterWorker = () => {
     if (idBack) data.append('id_photo_back', idBack);
 
     try {
-      const response = await fetch(`${API}/users/register/worker/`, {
+      const response = await fetch(`${API}/api/register/worker/`, {
         method: 'POST',
         body: data,
+       
       });
 
       if (response.ok) {
@@ -89,6 +90,7 @@ const RegisterWorker = () => {
         });
         setIdFront(null);
         setIdBack(null);
+         navigate('/login/worker')
       } else {
         const errorData = await response.json();
         console.error("Backend Error:", errorData);
