@@ -4,32 +4,40 @@ from .views import (
     AdminLoginView, 
     RegisterWorkerView, 
     RegisterEmployerView, 
-    HelperListView, 
     WorkerLoginView, 
     EmployerLoginView,
-    AdminUserManagementViewSet  
+    AdminUserManagementViewSet,
+    WorkerDashboardViewSet,
+    WorkerViewSet,           # New: Used for the directory and hiring
+    WorkerBookingViewSet,    # New: Used for workers to accept/decline
+    EmployerDashboardViewSet
 )
 
-# 1. Setup the Router for Admin Management
-# This handles: 
-# GET /api/admin/manage-users/ (List all)
-# GET /api/admin/manage-users/{id}/ (Retrieve detail)
-# POST /api/admin/manage-users/{id}/approve_worker/ (Custom Action)
 router = DefaultRouter()
+
+# Admin Management
 router.register(r'admin/manage-users', AdminUserManagementViewSet, basename='admin-manage-users')
 
+# Worker Dashboard (Profile, Status, Password)
+router.register(r'worker/dashboard', WorkerDashboardViewSet, basename='worker-dashboard')
+
+# Worker Invites (Accepting/Declining jobs)
+router.register(r'worker-requests', WorkerBookingViewSet, basename='worker-requests')
+
+# Employer Dashboard (Stats and My Requests)
+router.register(r'employer-dashboard', EmployerDashboardViewSet, basename='employer-dash')
+
+# Worker Directory (Searching and Hiring)
+router.register(r'workers', WorkerViewSet, basename='workers-directory')
+
 urlpatterns = [
-    # --- Public & Authentication Endpoints ---
+    # Auth Endpoints
     path('register/worker/', RegisterWorkerView.as_view(), name='register-worker'),
     path('register/employer/', RegisterEmployerView.as_view(), name='register-employer'),
-    path('workers/', HelperListView.as_view(), name='worker-list'),
-    
-    # --- Login Endpoints ---
     path('login/worker/', WorkerLoginView.as_view(), name='login-worker'),
     path('login/employer/', EmployerLoginView.as_view(), name='login-employer'),
     path('login/admin/', AdminLoginView.as_view(), name='login-admin'),
 
-    # --- Admin Management Endpoints (ViewSets) ---
-    # We use include(router.urls) to pull in all the management logic at once
+    # Include all router-generated URLs
     path('', include(router.urls)),
 ]

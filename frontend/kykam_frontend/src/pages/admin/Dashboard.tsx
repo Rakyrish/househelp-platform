@@ -118,7 +118,7 @@ const Dashboard = () => {
                {stats && stats.pending > 0 && (
                  <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl">
                    <p className="text-[10px] text-amber-500 font-bold uppercase">Action Required</p>
-                   <p className="text-xs text-amber-200/70 mt-1">{stats.pending} workers waiting for ID verification.</p>
+                   <p className="text-xs text-amber-200/70 mt-1">{stats.pending } users waiting for ID verification.</p>
                  </div>
                )}
                <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl">

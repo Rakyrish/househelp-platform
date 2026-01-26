@@ -13,6 +13,7 @@
     "antd": "^6.1.4",
     "axios": "^1.13.2",
     "gsap": "^3.14.2",
+    "lucide-react": "^0.563.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.11.0"

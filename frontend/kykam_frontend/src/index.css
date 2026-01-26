@@ -7,3 +7,42 @@
 body {
   @apply bg-gray-100 font-sans;
 }
+
+/* Custom Orange Theme Overrides */
+
+/* Tabs: Underline and Text Color */
+.ant-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #f3a82f !important;
+}
+
+.ant-tabs .ant-tabs-ink-bar {
+    background: #f3a82f !important;
+}
+
+.ant-tabs .ant-tabs-tab:hover {
+    color: #f3a82f !important;
+}
+
+/* Input Focus States */
+.ant-input-affix-wrapper:focus, 
+.ant-input-affix-wrapper-focused,
+.ant-input:focus {
+    border-color: #f3a82f !important;
+    box-shadow: 0 0 0 2px rgba(243, 168, 47, 0.1) !important;
+}
+
+/* Primary Button Hover States */
+.ant-btn-primary.bg-\[#f3a82f\]:hover {
+    background-color: #d98e1a !important; /* Slightly darker orange */
+    transition: all 0.3s ease;
+}
+
+/* Progress Circle Text */
+.ant-progress-text {
+    font-weight: bold;
+    color: #334155 !important; /* Slate 700 */
+}
+.custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }

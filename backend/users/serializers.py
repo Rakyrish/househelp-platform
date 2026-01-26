@@ -1,6 +1,6 @@
 from rest_framework import serializers
 # from django.contrib.auth import get_user_model
-from .models import User
+from .models import User, Booking
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
@@ -10,17 +10,15 @@ class RegisterWorkerSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     full_name = serializers.CharField(write_only=True)
 
-
     class Meta:
         model = User
         fields = [
             'full_name', 'password', 'email', 'phone', 'location', 'age',
-            'id_number', 'id_photo_front', 'id_photo_back', 
-            'kin_name', 'kin_phone', 'kin_relationship', 'gender'
+            'id_number', 'id_photo_front', 'id_photo_back', 'passport_img', 
+            'kin_name', 'kin_phone', 'kin_relationship', 'gender', 'experience', 'expected_salary'
         ]
 
     def create(self, validated_data):
-        # 1. Extract name and email
         full_name = validated_data.pop('full_name', '')
         email = validated_data.get('email')
         
@@ -28,9 +26,8 @@ class RegisterWorkerSerializer(serializers.ModelSerializer):
         first_name = name_parts[0]
         last_name = name_parts[1] if len(name_parts) > 1 else ''
 
-        # 2. Use email as the username to satisfy Django's requirement
         user = User.objects.create_user(
-            username=email,  # <--- Added this line
+            username=email,
             first_name=first_name,
             last_name=last_name,
             role='worker',
@@ -47,7 +44,7 @@ class RegisterEmployerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['full_name', 'password', 'email', 'phone', 'location', 'family_size', 'worker_type']
+        fields = ['full_name', 'password', 'email', 'phone', 'location', 'family_size', 'worker_type', 'salary', 'requirements', 'start_date', 'accommodation', 'id_number' ]
 
     def create(self, validated_data):
         full_name = validated_data.pop('full_name', '')
@@ -147,8 +144,40 @@ class AdminUserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 'phone', 
-            'role', 'status', 'is_verified', 'id_number', 
-            'id_photo_front', 'id_photo_back', 'location', 
-            'kin_name', 'kin_phone', 'worker_type', 'date_joined'
+            'role', 'status', 'is_verified', 'id_number', 'family_size', 'salary', 'start_date',
+            'id_photo_front', 'id_photo_back', 'location', 'age',
+            'kin_name', 'kin_phone', 'worker_type', 'date_joined', 'passport_img', 'expected_salary', 'salary', 'requirements', 'accommodation'
         ]
+class BookingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = ['id', 'employer', 'worker', 'status', 'created_at']
+        read_only_fields = ['employer', 'status']
+        
+class WorkerSerializer(serializers.ModelSerializer):
+    my_request_status = serializers.SerializerMethodField()
+    passport_img = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'first_name', 'last_name', 'worker_type', 'location', 
+            'experience', 'expected_salary', 'passport_img', 'is_verified', 
+            'status', 'my_request_status', 'phone'
+        ]
+
+    def get_my_request_status(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            # Check for any booking between this employer and this worker
+            booking = Booking.objects.filter(employer=request.user, worker=obj).first()
+            if booking:
+                return booking.status
+        return None
+
+    def get_passport_img(self, obj):
+        if obj.passport_img:
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.passport_img.url)
+        return None
 
