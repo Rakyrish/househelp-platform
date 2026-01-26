@@ -1,7 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Modal, Descriptions, Badge, Button, Divider, Avatar } from 'antd';
+import { 
+  EyeOutlined, 
+  SafetyCertificateOutlined, 
+  LogoutOutlined, 
+  DeleteOutlined,
+  ReloadOutlined,
+  FireOutlined,
+  EnvironmentOutlined
+} from '@ant-design/icons';
 import axios from 'axios';
 import StatusBadge from './StatusBadge';
+
+const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 interface User {
   id: number;
@@ -9,21 +21,27 @@ interface User {
   last_name: string;
   username: string;
   email: string;
-  role: string;
+  role: 'worker' | 'employer';
   status: string | null;
   date_joined: string;
   last_login: string | null;
   is_deleted: boolean;
+  is_verified: boolean;
+  location?: string;
+  phone?: string;
+  worker_type?: string;
+  expected_salary?: string | number;
+  family_size?: number;
+  id_number?: string;
+  age?: string;
 }
 
 const UserTable = ({ users }: { users: User[] }) => {
   const navigate = useNavigate();
-  
-  // States for Filtering
   const [roleFilter, setRoleFilter] = useState<'all' | 'worker' | 'employer'>('all');
   const [showTrash, setShowTrash] = useState(false);
+  const [previewUser, setPreviewUser] = useState<User | null>(null);
 
-  // --- HELPER: Time Ago Logic ---
   const formatTimeAgo = (dateString: string | null) => {
     if (!dateString) return "Never";
     const date = new Date(dateString);
@@ -37,26 +55,17 @@ const UserTable = ({ users }: { users: User[] }) => {
     return date.toLocaleDateString();
   };
 
- // DEBUGGING: Check your data in the F12 console
-  console.log("Raw Users from Backend:", users);
-
   const filteredUsers = users.filter(user => {
-    // Treat null/undefined/false as active. Only true is trash.
-    const isActuallyDeleted = user.is_deleted === true; 
-    
+    const isActuallyDeleted = user.is_deleted === true;
     const matchesTrashView = isActuallyDeleted === showTrash;
     const matchesRole = roleFilter === 'all' ? true : user.role === roleFilter;
-    
     return matchesTrashView && matchesRole;
   });
 
-  console.log(`Filtered Users (ShowTrash: ${showTrash}):`, filteredUsers);
-
-  // --- ACTIONS ---
-  const handleAction = async (action: string, id: number, message: string) => {
-    if (!window.confirm(message)) return;
+  const handleAction = async (action: string, id: number, confirmMsg: string) => {
+    if (!window.confirm(confirmMsg)) return;
     const token = localStorage.getItem('token');
-    const url = `http://localhost:8000/api/admin/manage-users/${id}/${action}/`;
+    const url = `${API}/api/admin/manage-users/${id}/${action}/`;
     
     try {
       if (action === 'permanent_erase') {
@@ -72,7 +81,7 @@ const UserTable = ({ users }: { users: User[] }) => {
 
   return (
     <div className="w-full space-y-6">
-      {/* TOOLBAR: Filters & Trash Toggle */}
+      {/* TOOLBAR */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/[0.02] p-4 rounded-2xl border border-white/5">
         <div className="flex bg-slate-900/50 p-1 rounded-xl border border-white/5">
           {(['all', 'worker', 'employer'] as const).map((type) => (
@@ -121,10 +130,10 @@ const UserTable = ({ users }: { users: User[] }) => {
               return (
                 <tr key={user.id} className="bg-white/[0.02] hover:bg-white/[0.05] transition-all group">
                   <td className="px-4 py-4 rounded-l-xl border-y border-l border-white/5">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-cyan-400 border border-white/5">
+                    <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setPreviewUser(user)}>
+                      <Avatar className="bg-slate-800 text-cyan-400 border border-white/5 group-hover:border-cyan-500/50">
                         {displayName.charAt(0).toUpperCase()}
-                      </div>
+                      </Avatar>
                       <div>
                         <div className="text-sm font-bold text-slate-200 capitalize">{displayName}</div>
                         <div className="text-[10px] text-slate-500">{user.email}</div>
@@ -145,14 +154,15 @@ const UserTable = ({ users }: { users: User[] }) => {
                     <div className="flex justify-end gap-2">
                       {!showTrash ? (
                         <>
-                          <button onClick={() => handleAction('logout_user', user.id, "Force logout this user?")} className="p-2 bg-white/5 text-slate-400 hover:text-white rounded-lg" title="Logout User">🚪</button>
+                          <button onClick={() => setPreviewUser(user)} className="p-2 bg-white/5 text-slate-400 hover:text-white rounded-lg"><EyeOutlined /></button>
+                          <button onClick={() => handleAction('logout_user', user.id, "Force logout?")} className="p-2 bg-white/5 text-slate-400 hover:text-white rounded-lg"><LogoutOutlined /></button>
                           <button onClick={() => navigate(`/admin/verify/${user.id}`)} className="text-[10px] font-bold uppercase px-3 py-1.5 bg-cyan-500/10 text-cyan-400 rounded-lg hover:bg-cyan-500 hover:text-black">Manage</button>
-                          <button onClick={() => handleAction('trash_user', user.id, "Move to trash?")} className="p-2 bg-white/5 text-slate-500 hover:text-red-400 rounded-lg" title="Trash">🗑️</button>
+                          <button onClick={() => handleAction('trash_user', user.id, "Trash?")} className="p-2 bg-white/5 text-slate-500 hover:text-red-400 rounded-lg"><DeleteOutlined /></button>
                         </>
                       ) : (
                         <>
-                          <button onClick={() => handleAction('restore_user', user.id, "Restore this user?")} className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg" title="Restore">🔄</button>
-                          <button onClick={() => handleAction('permanent_erase', user.id, "☢️ PERMANENT DELETE: This cannot be undone!")} className="p-2 bg-red-600 text-white rounded-lg" title="Erase Forever">🔥</button>
+                          <button onClick={() => handleAction('restore_user', user.id, "Restore?")} className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><ReloadOutlined /></button>
+                          <button onClick={() => handleAction('permanent_erase', user.id, "Erase Forever?")} className="p-2 bg-red-600 text-white rounded-lg"><FireOutlined /></button>
                         </>
                       )}
                     </div>
@@ -162,10 +172,83 @@ const UserTable = ({ users }: { users: User[] }) => {
             })}
           </tbody>
         </table>
-        {filteredUsers.length === 0 && (
-          <div className="text-center py-20 text-slate-600 text-xs italic">No members found in this category.</div>
-        )}
       </div>
+
+      {/* QUICK LOOK MODAL */}
+      <Modal
+        open={!!previewUser}
+        onCancel={() => setPreviewUser(null)}
+        footer={null}
+        width={550}
+        centered
+        className="admin-modal"
+        styles={{ body: { backgroundColor: '#0f172a', padding: 0, borderRadius: '24px', overflow: 'hidden' } }}
+      >
+        {previewUser && (
+          <div className="text-slate-200">
+            <div className="p-8 bg-gradient-to-br from-slate-800 to-slate-900 border-b border-white/5">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-5">
+                  <div className="w-20 h-20 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-3xl font-bold text-cyan-400">
+                    {previewUser.first_name[0]}
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white mb-1">{previewUser.first_name} {previewUser.last_name}</h2>
+                    <div className="flex gap-2">
+                      <Badge status={previewUser.is_verified ? "success" : "warning"} text={<span className="text-slate-400 text-[10px] font-bold uppercase">{previewUser.role}</span>} />
+                      {previewUser.is_verified && <SafetyCertificateOutlined className="text-cyan-400" />}
+                    </div>
+                  </div>
+                </div>
+                <Button type="primary" className="bg-cyan-500 border-none h-10 px-6 rounded-xl font-bold text-[#050b14]" onClick={() => navigate(`/admin/verify/${previewUser.id}`)}>Audit Full Docs</Button>
+              </div>
+            </div>
+
+            <div className="p-8">
+              <Descriptions column={2} layout="vertical">
+                <Descriptions.Item label={<span className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Contact Information</span>}>
+                  <div className="space-y-1">
+                    <p className="m-0 text-sm">{previewUser.email}</p>
+                    <p className="m-0 text-xs text-slate-400">{previewUser.phone || 'No phone added'}</p>
+                  </div>
+                </Descriptions.Item>
+                <Descriptions.Item label={<span className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Location</span>}>
+                  <p className="m-0 text-sm capitalize flex items-center gap-2"><EnvironmentOutlined className="text-cyan-500" /> {previewUser.location || 'Unknown'}</p>
+                </Descriptions.Item>
+
+                <Descriptions.Item span={2}><Divider className="border-white/5 my-2" /></Descriptions.Item>
+
+                {previewUser.role === 'worker' ? (
+                  <>
+                    <Descriptions.Item label={<span className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Specialization</span>}>
+                      <span className="text-cyan-400 font-bold capitalize">{previewUser.worker_type?.replace('_', ' ')}</span>
+                    </Descriptions.Item>
+                    <Descriptions.Item label={<span className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Expected Salary</span>}>
+                      <span className="text-slate-200">KSh {previewUser.expected_salary?.toLocaleString() || 'N/A'}</span>
+                    </Descriptions.Item>
+                  </>
+                ) : (
+                  <>
+                    <Descriptions.Item label={<span className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Household Size</span>}>
+                      <span className="text-slate-200">{previewUser.family_size || 0} Members</span>
+                    </Descriptions.Item>
+                    <Descriptions.Item label={<span className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Government ID</span>}>
+                      <span className="text-slate-200">{previewUser.id_number || 'Pending'}</span>
+                    </Descriptions.Item>
+                  </>
+                )}
+              </Descriptions>
+
+              <div className="mt-8 p-4 bg-black/20 rounded-xl border border-white/5 flex justify-between items-center">
+                <div className="text-[10px] text-slate-500 uppercase font-bold">Registration Data</div>
+                <div className="text-[10px] text-slate-400 font-mono">
+                  UID: {previewUser.id.toString().padStart(5, '0')} | Joined: {new Date(previewUser.date_joined).toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

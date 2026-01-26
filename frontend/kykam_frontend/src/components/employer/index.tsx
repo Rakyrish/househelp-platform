@@ -1,229 +1,280 @@
 import { useState, useEffect } from 'react';
-import { Card, Button, Spin, Row, Col, Statistic, Empty } from 'antd';
-import React, { useState, useEffect } from 'react';
-
-// Removed the first declaration of Employer
-import { Card, Tag, Button, Spin, Row, Col, Statistic, Empty } from 'antd';
+import { Layout, Row, Col, Card, Statistic, Input, Select, Slider, Tag, Button, Avatar, Empty, Drawer, Badge, message  } from 'antd';
 import { 
-  SearchOutlined, 
-  CheckCircleOutlined, 
-  UsergroupAddOutlined, 
-  HistoryOutlined,
-  HomeOutlined,
-  SafetyCertificateOutlined
+  UserOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined, 
+  EnvironmentOutlined, HistoryOutlined, SendOutlined, SafetyCertificateOutlined,
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 
+const { Content } = Layout;
+const { Option } = Select;
 const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const accent = '#f3a82f';
 
-interface User {
-  full_name?: string;
-  family_size?: number;
-  location?: string;
-  worker_type?: string;
-}
-
-const Employer = () => {
-  const [user, setUser] = useState<User | null>(null);
+const EmployerDashboard = () => {
+  const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [stats, setStats] = useState({ total_sent: 0, accepted: 0 });
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Filter States
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('all');
+  const [salaryRange, setSalaryRange] = useState([5000, 50000]);
+  const [experience, setExperience] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchEmployerData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API}/users/profile/`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUser(response.data);
-      } catch (err) {
-        console.error("Failed to load profile");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEmployerData();
-  }, []);
+    fetchData();
+  }, [search, category, salaryRange, experience]);
 
-  if (loading) {
-    return (
-      <div className="h-screen flex justify-center items-center bg-slate-50">
-        <Spin size="large" />
-      </div>
-    );
-  }
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Token ${token}` };
+
+      // 1. Fetch Workers with active filters
+      const workerRes = await axios.get(`${API}/api/workers/`, {
+        headers,
+        // params: { 
+        //   search, 
+        //   worker_type: category !== 'all' ? category : undefined,
+        //   min_salary: salaryRange[0],
+        //   max_salary: salaryRange[1],
+        //   experience: experience || undefined
+        // }
+      });
+      setWorkers(workerRes.data);
+
+      // 2. Fetch Stats
+      const statsRes = await axios.get(`${API}/api/employer-dashboard/stats/`, { headers });
+      setStats(statsRes.data);
+    } catch (err: any) {
+      console.error("Fetch Error:", err.response?.data);
+      message.error("Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHireRequest = async (workerId: number, name: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/workers/${workerId}/hire/`, {}, {
+        headers: { Authorization: `Token ${token}` }
+      });
+      
+      message.success(`Hire request sent to ${name}!`);
+      fetchData(); 
+    } catch (err: any) {
+      message.error(err.response?.data?.error || "Request failed");
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
-
-        {/* ===== Top Header ===== */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-800">
-              Welcome back, {user?.full_name?.split(' ')[0]}
-            </h1>
-            <p className="text-slate-500 mt-1">
-              Manage your household services and trusted workers.
-            </p>
+    <Layout className="min-h-screen bg-[#f8fafc]">
+      <Content className="p-4 lg:p-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8 flex justify-between items-end">
+            <div>
+                <h1 className="text-2xl font-bold text-slate-800 m-0">Employer Dashboard</h1>
+                <p className="text-slate-500">Find and connect with verified professionals.</p>
+            </div>
+            <Badge count={workers.length} overflowCount={999} color="#6366f1">
+                <Tag color="blue" className="m-0 px-3 py-1 rounded-full border-none font-medium">Available Workers</Tag>
+            </Badge>
           </div>
 
-          <Button
-            type="primary"
+          {/* Stats Section */}
+          <Row gutter={[24, 24]} className="mb-10">
+            <Col xs={24} md={8}>
+              <Card className="rounded-2xl border-none shadow-sm" styles={{ body: { padding: '20px' } }}>
+                <Statistic 
+                  title="Requests Sent" 
+                  value={stats.total_sent} 
+                  prefix={<SendOutlined className="text-blue-500" />} 
+                />
+              </Card>
+            </Col>
+            <Col xs={24} md={8}>
+              <Card className="rounded-2xl border-none shadow-sm" styles={{ body: { padding: '20px' } }}>
+                <Statistic 
+                  title="Accepted Hires" 
+                  value={stats.accepted} 
+                  styles={{ content: { color: '#10b981' } }}
+                  prefix={<CheckCircleOutlined />} 
+                />
+              </Card>
+            </Col>
+            <Col xs={24} md={8}>
+              <Card className="rounded-2xl border-none shadow-sm bg-gradient-to-r from-slate-800 to-slate-700" styles={{ body: { padding: '20px' } }}>
+                <div className="text-white">
+                  <p className="opacity-70 m-0 text-xs">Membership</p>
+                  <h3 className="text-lg font-bold m-0 uppercase tracking-wider text-orange-400">Standard Access</h3>
+                </div>
+              </Card>
+            </Col>
+          </Row>
+
+          {/* Search and Filters Bar */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <Input 
+              prefix={<SearchOutlined className="text-slate-400" />}
+              placeholder="Search by name, skills or location..."
+              className="h-12 rounded-xl border-none shadow-sm flex-1"
+              allowClear
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <Button 
+              icon={<FilterOutlined />} 
+              className="h-12 px-6 rounded-xl font-bold border-none shadow-sm bg-white text-slate-600 hover:text-orange-500"
+              onClick={() => setIsFilterOpen(true)}
+            >
+              Advanced Filters
+            </Button>
+          </div>
+
+          {/* Workers Grid */}
+          {loading ? (
+            <div className="text-center py-20 font-mono text-slate-400 italic">Searching database...</div>
+          ) : (
+            <Row gutter={[24, 24]}>
+              {workers.map((worker: any) => (
+                <Col xs={24} sm={12} lg={6} key={worker.id}>
+                  <Card 
+                    hoverable 
+                    className="rounded-3xl border-none shadow-sm overflow-hidden group h-full"
+                    styles={{ body: { padding: '24px' } }}
+                  >
+                    {/* Status Ribbon */}
+                    <div className="mb-4">
+                        {worker.status === 'approved' ? (
+                            <Tag icon={<SafetyCertificateOutlined />} color="success" className="rounded-full border-none px-3 py-1 text-[10px]">
+                                VERIFIED PROFESSIONAL
+                            </Tag>
+                        ) : (
+                            <Tag icon={<InfoCircleOutlined />} color="default" className="rounded-full border-none px-3 py-1 text-[10px]">
+                                VETTING IN PROGRESS
+                            </Tag>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col items-center text-center">
+                      <Badge dot={worker.is_verified} offset={[-5, 5]} color="#10b981">
+                        <Avatar size={80} src={worker.passport_img} icon={<UserOutlined />} className="border-4 border-slate-50 shadow-inner" />
+                      </Badge>
+                      
+                      <h3 className="mt-4 mb-1 font-bold text-slate-800 text-base capitalize">
+                        {worker.first_name} {worker.last_name}
+                      </h3>
+                      
+                      <Tag color="orange" className="rounded-full px-3 border-none font-bold text-[10px] mb-4">
+                        {worker.worker_type?.replace('_', ' ').toUpperCase()}
+                      </Tag>
+
+                      <div className="w-full space-y-3 mb-6 text-xs text-slate-600">
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-50">
+                          <span className="text-slate-400">Location</span>
+                          <span className="font-semibold"><EnvironmentOutlined className="text-orange-500" /> {worker.location}</span>
+                        </div>
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-50">
+                          <span className="text-slate-400">Experience</span>
+                          <span className="font-semibold"><HistoryOutlined className="text-blue-500" /> {worker.experience || 0} yrs</span>
+                        </div>
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-50">
+                          <span className="text-slate-400">Expected</span>
+                          <span className="text-emerald-600 font-bold text-sm">KSh {worker.expected_salary?.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400">Age</span>
+                          <span className="font-semibold">{worker.age} Years</span>
+                        </div>
+                      </div>
+
+                      <Button 
+                        block 
+                        type="primary" 
+                        size="large"
+                        className="bg-slate-900 border-none rounded-xl font-bold group-hover:bg-orange-500 transition-all duration-300 transform group-hover:scale-105"
+                        onClick={() => handleHireRequest(worker.id, worker.first_name)}
+                      >
+                        Send Hire Request
+                      </Button>
+                    </div>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          )}
+
+          {!loading && workers.length === 0 && (
+            <div className="bg-white rounded-3xl p-20 shadow-sm text-center">
+                <Empty description="No professionals match your current filters." />
+                <Button type="link" onClick={() => {setCategory('all'); setSalaryRange([5000, 50000]); setSearch('');}}>Clear all filters</Button>
+            </div>
+          )}
+        </div>
+      </Content>
+
+      <Drawer
+        title={<span className="text-slate-800 font-bold">Refine Your Search</span>}
+        onClose={() => setIsFilterOpen(false)}
+        open={isFilterOpen}
+        styles={{ body: { backgroundColor: '#f8fafc' } }}
+        width={320}
+      >
+        <div className="space-y-8">
+          <div>
+            <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest block mb-4">Worker Category</label>
+            <Select value={category} className="w-full h-10 rounded-lg" onChange={(v) => setCategory(v)}>
+              <Option value="all">All Roles</Option>
+              <Option value="nanny">Nanny</Option>
+              <Option value="cook">Cook</Option>
+              <Option value="cleaner">Cleaner</Option>
+              <Option value="gardener">Gardener</Option>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest block mb-4">Min Experience (Years)</label>
+            <Select placeholder="Any Experience" className="w-full h-10" allowClear onChange={(v) => setExperience(v)}>
+              <Option value={1}>1+ Years</Option>
+              <Option value={3}>3+ Years</Option>
+              <Option value={5}>5+ Years</Option>
+              <Option value={10}>10+ Years</Option>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest block mb-4">Monthly Salary (KSh)</label>
+            <Slider 
+              range 
+              value={salaryRange} 
+              min={0} 
+              max={100000} 
+              step={1000}
+              onChange={(v) => setSalaryRange(v as [number, number])}
+              styles={{ track: { background: '#f97316' }, handle: { borderColor: '#f97316' } }}
+            />
+            <div className="flex justify-between text-xs font-bold mt-2 text-slate-500">
+              <span>KSh {salaryRange[0].toLocaleString()}</span>
+              <span>KSh {salaryRange[1].toLocaleString()}</span>
+            </div>
+          </div>
+
+          <Button 
+            block 
+            type="primary" 
             size="large"
-            icon={<SearchOutlined />}
-            className="rounded-xl h-12 px-8 border-none"
-            style={{ backgroundColor: accent }}
-            onClick={() => navigate('/dashboard/workerDir')}
+            className="bg-orange-500 h-12 rounded-xl font-bold border-none shadow-lg shadow-orange-200"
+            onClick={() => setIsFilterOpen(false)}
           >
-            Find a Worker
+            Show Results
           </Button>
         </div>
-
-        {/* ===== Stats Overview ===== */}
-        <Row gutter={[24, 24]} className="mb-12">
-          <Col xs={24} sm={8}>
-            <Card bordered={false} className="rounded-2xl shadow-sm hover:shadow-md transition-all">
-              <Statistic
-                title="Active Bookings"
-                value={0}
-                prefix={<HistoryOutlined className="text-blue-500" />}
-              />
-            </Card>
-          </Col>
-
-          <Col xs={24} sm={8}>
-            <Card bordered={false} className="rounded-2xl shadow-sm hover:shadow-md transition-all">
-              <Statistic
-                title="Verified Workers"
-                value={124}
-                prefix={<SafetyCertificateOutlined className="text-green-500" />}
-              />
-            </Card>
-          </Col>
-
-          <Col xs={24} sm={8}>
-            <Card bordered={false} className="rounded-2xl shadow-sm hover:shadow-md transition-all">
-              <Statistic
-                title="Family Size"
-                value={user?.family_size || 0}
-                prefix={<UsergroupAddOutlined className="text-orange-500" />}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        {/* ===== Main Layout ===== */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-
-          {/* ===== Main Column ===== */}
-          <div className="lg:col-span-2 space-y-10">
-
-            {/* Recent Requests */}
-            <Card 
-              title={<span className="font-semibold">Your Recent Requests</span>} 
-              className="rounded-2xl shadow-sm"
-            >
-              <Empty 
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="You haven't made any booking requests yet."
-              >
-                <Button 
-                  className="rounded-lg"
-                  style={{ borderColor: accent, color: accent }}
-                >
-                  View Catalog
-                </Button>
-              </Empty>
-            </Card>
-
-            {/* Categories */}
-            <Card 
-              title={<span className="font-semibold">Browse Categories</span>} 
-              className="rounded-2xl shadow-sm"
-            >
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
-                {['Nanny', 'Cleaner', 'Chef', 'Gardener', 'Elderly Care', 'Driver'].map((cat) => (
-                  <div
-                    key={cat}
-                    className="p-5 border border-slate-100 rounded-xl text-center cursor-pointer
-                               hover:border-orange-200 hover:bg-orange-50 transition-all"
-                  >
-                    <p className="font-medium text-slate-700">{cat}</p>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-          </div>
-
-          {/* ===== Side Column ===== */}
-          <div className="space-y-10">
-
-            {/* Profile Summary */}
-            <Card 
-              title={<span className="font-semibold">Profile Summary</span>} 
-              className="rounded-2xl shadow-sm"
-            >
-              <div className="space-y-5">
-
-                <div className="flex items-center gap-3 text-slate-600">
-                  <HomeOutlined />
-                  <span>{user?.location || 'Location not set'}</span>
-                </div>
-
-                <div className="flex items-center gap-3 text-slate-600">
-                  <CheckCircleOutlined className="text-green-500" />
-                  <span>Account Verified</span>
-                </div>
-
-                <div className="border-t border-slate-100 pt-4">
-                  <p className="text-xs font-semibold text-slate-400 uppercase">Requirement</p>
-                  <p className="text-sm font-medium text-slate-700 mt-1 capitalize">
-                    Seeking: {user?.worker_type?.replace('_', ' ')}
-                  </p>
-                </div>
-
-                <Button block className="rounded-xl h-11">
-                  Edit Preferences
-                </Button>
-              </div>
-            </Card>
-
-            {/* Trust & Safety */}
-            <div
-              className="p-7 rounded-2xl shadow-lg relative overflow-hidden"
-              style={{ background: 'linear-gradient(135deg, #1e293b, #020617)' }}
-            >
-              <div className="relative z-10">
-                <h3 className="text-lg font-semibold text-white">Trust & Safety</h3>
-                <p className="text-slate-300 text-sm mt-3 leading-relaxed">
-                  All Kykam workers undergo a mandatory 3-step vetting process including
-                  background checks and physical verification.
-                </p>
-
-                <Button
-                  type="link"
-                  className="p-0 mt-4"
-                  style={{ color: accent }}
-                >
-                  Learn more →
-                </Button>
-              </div>
-
-              <div className="absolute -right-6 -bottom-6 opacity-10">
-                <SafetyCertificateOutlined style={{ fontSize: '120px', color: 'white' }} />
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-    </div>
+      </Drawer>
+    </Layout>
   );
 };
 
-export default Employer;
+export default EmployerDashboard;
