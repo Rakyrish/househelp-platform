@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Card, Button, Tag, List, Avatar, message, Empty, Badge } from 'antd';
-import { CheckOutlined, CloseOutlined, UserOutlined, HomeOutlined, PhoneOutlined } from '@ant-design/icons';
+import { Card, Button, List, Avatar, message, Empty, Badge, Typography, Space, Divider } from 'antd';
+import { 
+  CheckOutlined, CloseOutlined, UserOutlined, 
+  HomeOutlined, PhoneOutlined, DollarOutlined, 
+  TeamOutlined, CalendarOutlined 
+} from '@ant-design/icons';
 import axios from 'axios';
 
+const { Title, Text } = Typography;
 const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const WorkerRequests = () => {
@@ -12,7 +17,6 @@ const WorkerRequests = () => {
   const fetchRequests = async () => {
     try {
       const token = localStorage.getItem('token');
-      // UPDATED: Added /my_invites/ to match the ViewSet action
       const res = await axios.get(`${API}/api/worker-requests/my_invites/`, {
         headers: { Authorization: `Token ${token}` }
       });
@@ -29,7 +33,6 @@ const WorkerRequests = () => {
   const handleResponse = async (id: number, status: 'accepted' | 'declined') => {
     try {
       const token = localStorage.getItem('token');
-      // UPDATED: matches @action(detail=True) respond_to_request in views.py
       await axios.post(`${API}/api/worker-requests/${id}/respond_to_request/`, 
         { status },
         { headers: { Authorization: `Token ${token}` } }
@@ -42,71 +45,120 @@ const WorkerRequests = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-800 m-0">Job Invites</h2>
-        <p className="text-slate-500">Respond to employers who want to hire you.</p>
-      </div>
-      
-      <List
-        loading={loading}
-        dataSource={requests}
-        locale={{ emptyText: <Empty description="No job requests yet. Keep your profile updated!" /> }}
-        renderItem={(req: any) => (
-          <Card key={req.id} className="mb-4 rounded-2xl shadow-sm border-none overflow-hidden" styles={{ body: { padding: '20px' } }}>
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-4">
-                <Avatar size={64} icon={<UserOutlined />} className="bg-orange-100 text-orange-600" />
-                <div>
-                  <h4 className="text-lg font-bold m-0 text-slate-800">
-                    {req.employer_name}
-                  </h4>
-                  <div className="flex gap-4 text-slate-500 text-xs mt-1">
-                    <span><HomeOutlined /> {req.location || 'Location not set'}</span>
-                    <Badge 
-                        status={req.status === 'accepted' ? 'success' : req.status === 'pending' ? 'processing' : 'default'} 
-                        text={<span className="capitalize">{req.status}</span>} 
+    <div className="p-4 md:p-10 bg-[#f8fafc] min-h-screen">
+      <div className="max-w-3xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-8 flex justify-between items-end">
+          <div>
+            <Title level={2} className="!mb-1 !font-black text-slate-800">Job Invites</Title>
+            <Text className="text-slate-500 text-base">You have <span className="text-orange-600 font-bold">{requests.filter((r:any) => r.status === 'pending').length}</span> new opportunities waiting.</Text>
+          </div>
+          <Button onClick={fetchRequests} type="text" className="text-blue-600 font-semibold hover:bg-blue-50">Refresh</Button>
+        </div>
+        
+        <List
+          loading={loading}
+          dataSource={requests}
+          locale={{ 
+            emptyText: <Empty 
+              image={Empty.PRESENTED_IMAGE_SIMPLE} 
+              description={<span className="text-slate-400">No job requests at the moment.</span>} 
+            /> 
+          }}
+          renderItem={(req: any) => (
+            <Card 
+              key={req.id} 
+              className={`mb-6 rounded-3xl border-none shadow-sm transition-all hover:shadow-md overflow-hidden ${req.status === 'accepted' ? 'ring-2 ring-emerald-500/20' : ''}`}
+              styles={{ body: { padding: '0' } }}
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex gap-4">
+                    <Avatar 
+                      size={64} 
+                      src={req.employer_image}
+                      icon={<UserOutlined />} 
+                      className="bg-orange-100 text-orange-600 border-2 border-white shadow-sm" 
                     />
+                    <div>
+                      <Title level={4} className="!m-0 !font-bold text-slate-800">
+                        {req.employer_name}
+                      </Title>
+                      <Space split={<Divider type="vertical" />} className="text-slate-400 text-xs mt-1">
+                         <span className="flex items-center gap-1"><HomeOutlined /> {req.location || 'Remote'}</span>
+                         <span className="flex items-center gap-1"><CalendarOutlined /> {new Date().toLocaleDateString()}</span>
+                      </Space>
+                    </div>
+                  </div>
+                  <Badge 
+                    className="mt-1"
+                    status={req.status === 'accepted' ? 'success' : req.status === 'pending' ? 'processing' : 'default'} 
+                    text={<Text strong className="uppercase text-[10px] tracking-widest text-slate-400">{req.status}</Text>} 
+                  />
+                </div>
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl mb-6">
+                  <div className="flex flex-col">
+                    <Text className="text-[10px] uppercase text-slate-400 font-bold">Offer Salary</Text>
+                    <Text strong className="text-emerald-600"><DollarOutlined /> KSh {req.salary?.toLocaleString()}</Text>
+                  </div>
+                  <div className="flex flex-col">
+                    <Text className="text-[10px] uppercase text-slate-400 font-bold">Family Size</Text>
+                    <Text strong><TeamOutlined /> {req.family_size || 'N/A'} Persons</Text>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex gap-2">
-                {req.status === 'pending' ? (
-                  <>
+                {/* Actions Section */}
+                <div className="flex gap-3">
+                  {req.status === 'pending' ? (
+                    <>
+                      <Button 
+                        block
+                        type="primary"
+                        icon={<CheckOutlined />} 
+                        className="bg-emerald-500 hover:!bg-emerald-600 border-none rounded-xl h-12 font-bold shadow-lg shadow-emerald-200"
+                        onClick={() => handleResponse(req.id, 'accepted')}
+                      >
+                        Accept Offer
+                      </Button>
+                      <Button 
+                        danger 
+                        icon={<CloseOutlined />} 
+                        className="rounded-xl h-12 px-8 font-bold border-slate-200 hover:bg-red-50"
+                        onClick={() => handleResponse(req.id, 'declined')}
+                      >
+                        Decline
+                      </Button>
+                    </>
+                  ) : req.status === 'accepted' ? (
                     <Button 
-                      icon={<CheckOutlined />} 
-                      className="bg-emerald-500 text-white border-none rounded-xl h-10 px-6 font-bold hover:bg-emerald-600"
-                      onClick={() => handleResponse(req.id, 'accepted')}
+                      block
+                      type="primary"
+                      icon={<PhoneOutlined />}
+                      className="h-12 rounded-xl bg-blue-600 hover:!bg-blue-700 font-bold border-none shadow-lg shadow-blue-200"
+                      onClick={() => window.open(`tel:${req.employer_phone}`)}
                     >
-                      Accept
+                      Call Employer Now ({req.employer_phone || 'undefined'})
                     </Button>
-                    <Button 
-                      danger 
-                      icon={<CloseOutlined />} 
-                      className="rounded-xl h-10 px-6 font-bold border-slate-200"
-                      onClick={() => handleResponse(req.id, 'declined')}
-                    >
-                      Decline
+                  ) : (
+                    <Button block disabled className="h-12 rounded-xl border-dashed">
+                      Request was {req.status}
                     </Button>
-                  </>
-                ) : req.status === 'accepted' ? (
-                  <Button 
-                    type="primary"
-                    icon={<PhoneOutlined />}
-                    className="h-10 rounded-xl bg-blue-600 font-bold border-none"
-                    onClick={() => window.open(`tel:${req.employer_phone}`)}
-                  >
-                    Call Employer
-                  </Button>
-                ) : (
-                  <Tag color="default" className="rounded-full px-4 py-1 border-none">Request {req.status}</Tag>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          </Card>
-        )}
-      />
+              
+              {/* Decorative Footer for accepted items */}
+              {req.status === 'accepted' && (
+                <div className="bg-emerald-50 px-6 py-2 text-center text-emerald-600 text-[10px] font-bold uppercase tracking-widest">
+                  You are currently hired for this position
+                </div>
+              )}
+            </Card>
+          )}
+        />
+      </div>
     </div>
   );
 };

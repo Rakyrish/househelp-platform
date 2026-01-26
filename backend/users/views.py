@@ -14,6 +14,8 @@ from .serializers import (
     LoginWorkerSerializer, LoginEmployerSerializer, AdminUserDetailSerializer, WorkerSerializer
 )
 from .utils import send_verification_email
+from django.shortcuts import get_object_or_404
+from django.db import transaction
 
 User = get_user_model()
 
@@ -182,6 +184,8 @@ class WorkerDashboardViewSet(viewsets.ViewSet):
             "location": i.employer.location,
             "status": i.status,
             "salary": i.employer.salary,
+            "family_size": i.employer.family_size,
+            "employer_phone": i.employer.phone,
             "created_at": i.created_at
         } for i in invites]
         return Response(data)
@@ -195,7 +199,7 @@ class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         # 1. Start with basic filtered queryset
-        queryset = User.objects.filter(role='worker', is_verified=True, is_deleted=False)
+        queryset = User.objects.filter(role='worker', is_deleted=False)
         params = self.request.query_params
         
         # 2. Extract Filters
@@ -205,6 +209,10 @@ class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
         min_salary = params.get('min_salary')
         max_salary = params.get('max_salary')
         experience = params.get('experience')
+
+        show_unavailable = self.request.query_params.get('show_unavailable', 'false')
+        if show_unavailable == 'false':
+            queryset = queryset.filter(is_available=True)
 
         # 3. Apply Filtering
         if location: 
@@ -227,6 +235,38 @@ class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(experience=experience)
 
         return queryset.order_by('-date_joined')
+    @action(detail=True, methods=['post'])
+    def release_worker(self, request, pk=None):
+        # Find the active booking
+        booking = get_object_or_404(Booking, id=pk, employer=request.user, status='accepted')
+        
+        # 1. Update Booking Status
+        booking.status = 'completed'
+        booking.save()
+        
+        # 2. Make Worker Available again
+        worker = booking.worker
+        worker.is_available = True
+        worker.current_employer = None
+        worker.save()
+        
+        return Response({
+            "message": f"{worker.first_name} has been released and is now available for others."
+        })
+
+    @action(detail=True, methods=['post'])
+    def accept_booking(self, request, pk=None):
+        booking = self.get_object()
+        booking.status = 'accepted'
+        booking.save()
+
+        # Automatically set worker to unavailable
+        worker = booking.worker
+        worker.is_available = False
+        worker.current_employer = booking.employer
+        worker.save()
+        
+        return Response({"message": "You are now hired!"})
 
     @action(detail=True, methods=['post'])
     def hire(self, request, pk=None):
@@ -298,6 +338,9 @@ class WorkerBookingViewSet(viewsets.ModelViewSet):
             "location": i.employer.location,
             "status": i.status,
             "salary": i.employer.salary,
+            "age": i.employer.age,
+            "family_size": i.employer.family_size,
+            "employer_phone": i.employer.phone,
             "created_at": i.created_at
         } for i in invites]
         return Response(data)
@@ -306,20 +349,47 @@ class WorkerBookingViewSet(viewsets.ModelViewSet):
         # We can just call the same logic as above
         return WorkerDashboardViewSet.job_invites(self, request)
 
-    # This fixes the 404 for /api/worker-requests/{id}/respond_to_request/
+   
+
     @action(detail=True, methods=['post'])
     def respond_to_request(self, request, pk=None):
-        booking = self.get_object() # This correctly gets the Booking object
-        new_status = request.data.get('status')
+        # Use a transaction to ensure either everything updates or nothing does
+        with transaction.atomic():
+            # 1. Locate the specific pending request for this worker
+            booking = get_object_or_404(Booking, id=pk, worker=request.user, status='pending')
+            new_status = request.data.get('status')
 
-        if booking.worker != request.user:
-            return Response({"error": "Unauthorized"}, status=403)
+            if new_status == 'accepted':
+                worker = booking.worker
+                
+                # 2. Update Worker to "Booked"
+                worker.is_available = False
+                worker.current_employer = booking.employer
+                worker.save()
 
-        if new_status in ['accepted', 'declined']:
-            booking.status = new_status
-            booking.save()
-            return Response({"message": f"Request {new_status}"})
-        return Response({"error": "Invalid status"}, status=400)
+                # 3. Mark the current booking as Accepted
+                booking.status = 'accepted'
+                booking.save()
+
+                # 4. AUTO-DECLINE: Cancel all other pending requests for this worker
+                # This prevents other employers from being "stuck" waiting for a response
+                other_requests = Booking.objects.filter(
+                    worker=worker, 
+                    status='pending'
+                ).exclude(id=booking.id)
+                
+                other_requests.update(status='declined')
+
+                return Response({
+                    "message": "Job accepted. Other pending requests have been automatically declined."
+                })
+
+            elif new_status == 'declined':
+                booking.status = 'declined'
+                booking.save()
+                return Response({"message": "Request declined."})
+
+        return Response({"error": "Invalid status choice."}, status=400)
 
 class EmployerDashboardViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -333,6 +403,26 @@ class EmployerDashboardViewSet(viewsets.ViewSet):
             "accepted": Booking.objects.filter(employer=request.user, status='accepted').count()
         })
 
+    @action(detail=True, methods=['post'])
+    def release_worker(self, request, pk=None):
+        # Find the active booking
+        booking = get_object_or_404(Booking, id=pk, employer=request.user, status='accepted')
+        
+        # 1. Update Booking Status
+        booking.status = 'completed'
+        booking.save()
+        
+        # 2. Make Worker Available again
+        worker = booking.worker
+        worker.is_available = True
+        worker.current_employer = None
+        worker.save()
+        
+        return Response({
+            "message": f"{worker.first_name} has been released and is now available for others."
+        })
+    
+
     @action(detail=False, methods=['get'])
     def my_requests(self, request):
         bookings = Booking.objects.filter(employer=request.user).select_related('worker')
@@ -344,6 +434,38 @@ class EmployerDashboardViewSet(viewsets.ViewSet):
             "worker_phone": b.worker.phone if b.status == 'accepted' else "Locked"
         } for b in bookings]
         return Response(data)
+    
+    
+    @action(detail=False, methods=['get'])
+    def history(self, request):
+        """Returns all hiring requests made by the current employer"""
+        bookings = Booking.objects.filter(employer=request.user).order_by('-created_at')
+        
+        data = []
+        for b in bookings:
+            data.append({
+                "id": b.id,
+                "worker_id": b.worker.id,
+                "worker_name": f"{b.worker.first_name} {b.worker.last_name}",
+                "worker_type": b.worker.worker_type.replace('_', ' ') if b.worker.worker_type else "General",
+                "status": b.status,
+                "date": b.created_at.strftime("%d %b %Y"),
+                # Only show phone if worker accepted
+                "worker_phone": b.worker.phone if b.status == 'accepted' else None,
+                "location": b.worker.location
+            })
+        return Response(data)
+    @action(detail=True, methods=['delete'])
+    def remove_history(self, request, pk=None):
+        # Only allow deleting if the booking belongs to the employer 
+        # and it is NOT 'accepted' (usually you want to keep accepted records for records)
+        booking = get_object_or_404(Booking, id=pk, employer=request.user)
+        
+        if booking.status == 'accepted':
+            return Response({"error": "Cannot delete an active/accepted hire from history."}, status=400)
+            
+        booking.delete()
+        return Response(status=204)
 
 # -----------------------------------------------------------
 # ADMIN MANAGEMENT
