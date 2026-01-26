@@ -114,7 +114,7 @@ const RegisterEmployer = () => {
                   <FormInput label="Full Name*" icon={User} name="full_name" type="text" value={formData.full_name} onChange={handleChange} required placeholder="Enter your full name" />
                 </div>
                 <FormInput label="Email Address*" icon={Mail} name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="name@email.com" />
-                <FormInput label="Phone Number*" icon={Phone} name="phone" type="text" inputMode="numeric" value={formData.phone} onChange={handleNumericChange} required placeholder="0712345678" />
+                <FormInput label="Phone Number*(Prefer Whatsapp Number)" icon={Phone} name="phone" type="text" inputMode="numeric" value={formData.phone} onChange={handleNumericChange} required placeholder="0712345678" />
                 <FormInput label="Password*" icon={Lock} name="password" type="password" value={formData.password} onChange={handleChange} required />
                 <FormInput label="Confirm Password*" icon={Lock} name="confirm_password" type="password" value={formData.confirm_password} onChange={handleChange} required />
               </div>

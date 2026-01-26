@@ -51,6 +51,8 @@ class User(AbstractUser):
         null=True, 
         blank=True
     )
+    is_available = models.BooleanField(default=True)
+    current_employer = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     requirements = models.TextField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='other')

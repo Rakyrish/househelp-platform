@@ -118,7 +118,7 @@ const RegisterWorker = () => {
         message.success("Registration Successful!");
         navigate("/login/worker");
       } else {
-        const err = await response.json();
+        await response.json();
         message.error("Registration failed. Email or ID may already be in use.");
       }
     } catch (error) {
@@ -153,7 +153,7 @@ const RegisterWorker = () => {
                 <FormInput label="Email Address*" icon={Mail} name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="john@example.com" />
                 <FormInput label="Password*" icon={Lock} name="password" type="password" value={formData.password} onChange={handleChange} required />
                 <FormInput label="Confirm Password*" icon={Lock} name="confirm_password" type="password" value={formData.confirm_password} onChange={handleChange} required />
-                <FormInput label="Phone Number*" icon={Phone} name="phone" type="text" inputMode="numeric" value={formData.phone} onChange={handleNumericChange} required placeholder="0712345678" />
+                <FormInput label="Phone Number* (Prefer Whatsapp Number) " icon={Phone} name="phone" type="text" inputMode="numeric" value={formData.phone} onChange={handleNumericChange} required placeholder="0712345678" />
                 <FormInput label="Expected Salary*" icon={DollarSign} name="expected_salary" type="text" inputMode="numeric" value={formData.expected_salary} onChange={handleNumericChange} required placeholder="Ksh 15,000" />
                 <FormInput label="Location*" icon={MapPin} name="location" type="text" value={formData.location} onChange={handleChange} required placeholder="City, Suburb" />
                 

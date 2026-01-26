@@ -163,7 +163,7 @@ class WorkerSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'first_name', 'last_name', 'worker_type', 'location', 
             'experience', 'expected_salary', 'passport_img', 'is_verified', 
-            'status', 'my_request_status', 'phone'
+            'status', 'my_request_status', 'phone', 'age', 'is_available', 'current_employer'
         ]
 
     def get_my_request_status(self, obj):
