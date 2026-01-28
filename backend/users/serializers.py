@@ -1,8 +1,9 @@
 from rest_framework import serializers
 # from django.contrib.auth import get_user_model
-from .models import User, Booking
+from .models import User, Booking, Category,PlatformSetting
 from django.contrib.auth import authenticate
 from rest_framework import serializers
+from django.utils.text import slugify
 
 # User = get_user_model()
 
@@ -163,7 +164,7 @@ class WorkerSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'first_name', 'last_name', 'worker_type', 'location', 
             'experience', 'expected_salary', 'passport_img', 'is_verified', 
-            'status', 'my_request_status', 'phone', 'age', 'is_available', 'current_employer'
+            'status', 'my_request_status', 'phone', 'age', 'is_available', 'current_employer',  'start_date','requirements'
         ]
 
     def get_my_request_status(self, obj):
@@ -180,4 +181,53 @@ class WorkerSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             return request.build_absolute_uri(obj.passport_img.url)
         return None
+    
+class CategorySerializer(serializers.ModelSerializer):
+    # This will pick up the 'worker_count' we manually set in get_queryset
+    worker_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'icon_emoji', 'description', 'is_active', 'worker_count']
+        read_only_fields = ['slug']
+
+    def create(self, validated_data):
+        # Auto-generate slug from name if not provided
+        if 'slug' not in validated_data:
+            validated_data['slug'] = slugify(validated_data['name'])
+        return super().create(validated_data)
+
+class PlatformSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlatformSetting
+        # These fields MUST match the "name" props in your Ant Design Form
+        fields = [
+            'maintenance_mode', 
+            'broadcast_message', 
+            'allow_new_registrations', 
+            'support_email', 
+            'platform_fee_info'
+        ]
+
+    def validate_support_email(self, value):
+        """Custom validation to ensure the support email is valid."""
+        if not value.endswith('@kykam.com') and not value.endswith('.com'):
+            raise serializers.ValidationError("Please provide a valid professional email address.")
+        return value
+
+# Extension: Update your existing AdminUserDetailSerializer 
+# to ensure it returns the display name of the worker_type
+class AdminUserDetailSerializer(serializers.ModelSerializer):
+    worker_type_display = serializers.CharField(source='get_worker_type_display', read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 'phone', 
+            'role', 'status', 'is_verified', 'id_number', 'family_size', 
+            'id_photo_front', 'id_photo_back', 'location', 'age',
+            'kin_name', 'kin_phone', 'worker_type', 'worker_type_display', 
+            'date_joined', 'passport_img', 'expected_salary', 'salary', 
+            'requirements', 'accommodation'
+        ]
 

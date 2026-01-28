@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 load_dotenv()
 
@@ -11,6 +12,12 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'host.docker.internal', '*']
+CORS_ALLOW_ALL_ORIGINS = True  # For development only
+# OR
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -31,12 +38,13 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # 1. ALWAYS FIRST
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    'django.middleware.common.CommonMiddleware',  # 2. MUST BE AFTER CORS
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'users.middleware.MaintenanceMiddleware', # 3. Custom logic should be lower
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -67,7 +75,7 @@ DATABASES = {
         'NAME': os.getenv('DBNAME'),
         'USER': os.getenv('DBUSER'),
         'PASSWORD': os.getenv('DBPASSWORD'),
-        'HOST': 'host.docker.internal',
+        'HOST': os.getenv('DBHOST'),
         'PORT': os.getenv('DBPORT', '5432'),
     }
 }
@@ -85,10 +93,11 @@ AUTHENTICATION_BACKENDS = [
 # This ensures DRF knows how to authenticate and find its CSS
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'users.authentication.ExpiringTokenAuthentication', # Changed this
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated', # Recommendation: Secure by default
         'rest_framework.permissions.AllowAny',
     ],
 }
@@ -111,17 +120,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Allows your React app to display media/site content in iframes
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
-# settings.py
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_USER') 
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD') 
-DEFAULT_FROM_EMAIL = f"Kykam Agencies <{os.getenv('EMAIL_USER')}>"
-# settings.py
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True, 
+}
+
+TOKEN_EXPIRED_AFTER_SECONDS = 300  # Token expires in 5 minutes
+
+# --- SENDGRID CONFIGURATION ---
+EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+
+# This is the email you verified in your SendGrid dashboard
+DEFAULT_FROM_EMAIL = os.getenv("EMAIL_USER") 
+
+# Toggle this for debugging
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False
+

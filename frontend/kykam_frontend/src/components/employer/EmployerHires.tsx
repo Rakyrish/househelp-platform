@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { 
   Table, Tag, Button, Card, message, Typography, 
-  Space, Popconfirm, Avatar, Empty
+  Space, Popconfirm, Avatar, Empty,Alert
 } from 'antd';
 import { 
   PhoneOutlined, ClockCircleOutlined, UserOutlined, 
   CloseCircleOutlined, DeleteOutlined, 
-  UnlockOutlined, CheckCircleOutlined, ReloadOutlined
+  UnlockOutlined, CheckCircleOutlined, ReloadOutlined,SafetyCertificateOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -177,6 +177,25 @@ const EmployerHires = () => {
         className="rounded-[2.5rem] border-none shadow-sm overflow-hidden"
         styles={{ body: { padding: '2rem' } }}
       >
+         {/* Advice Banner for Employers */}
+          <Alert
+            className="mb-8 rounded-2xl border-none bg-indigo-50"
+            message={
+              <div className="flex items-center gap-3 py-1">
+                <div className="bg-indigo-600 p-2 rounded-xl">
+                  <SafetyCertificateOutlined className="text-white text-xl" />
+                </div>
+                <div>
+                  <h4 className="m-0 font-bold text-indigo-900">Humble Request</h4>
+                  <p className="m-0 text-indigo-700 text-xs">
+                    if <span className="font-black text-indigo-900">Contract</span> is done kindly release worker to allow being seeing by other
+                    employers. Thanks.
+                  </p>
+                </div>
+              </div>
+            }
+            type="info"
+          />
         <div className="flex justify-between items-center mb-10">
           <div>
             <Title level={4} className="!m-0 !font-black text-slate-800">History & Management</Title>
@@ -191,6 +210,7 @@ const EmployerHires = () => {
             Refresh
           </Button>
         </div>
+       
 
         <Table 
           columns={columns} 

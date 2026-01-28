@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import Header from "./layout/header";
 import Footer from "./layout/footer";
-
+import { useState, useEffect } from "react";
 // Public & Auth Pages
 import Home from "./pages/Home/Home";
 import About from "./pages/Home/about";
@@ -11,7 +11,7 @@ import RegisterWorker from "./auth/register/Worker";
 import RegisterEmployer from "./auth/register/Employer";
 import WorkerLogin from "./auth/login/Worker";
 import EmployerLogin from "./auth/login/Employer";
-import AdminLogin from "./auth/login/Admin/AdminLogin"; 
+import AdminLogin from "./auth/login/Admin/AdminLogin";
 
 // Dashboard Pages
 import Worker from "./components/worker";
@@ -27,8 +27,46 @@ import VerificationPage from "./pages/admin/Verification";
 // Context & Protection
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MaintenancePage from "./pages/MaintenancePage";
+import ForgotPassword from "./auth/ForgotPassword";
+import ResetPasswordConfirm from "./auth/ResetPasswordConfirm";
+import axios from "axios";
 
 function App() {
+  const [maintenance, setMaintenance] = useState({ active: false, msg: "" });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        // Step 1: Public check of the platform status
+        const { data } = await axios.get("/api/admin/platform-settings/");
+
+        // Step 2: Check localStorage for Admin status
+        const userStr = localStorage.getItem("user"); // "{"name":" ","role":"admin"}"
+        const user = userStr ? JSON.parse(userStr) : null;
+        const isAdmin = user?.role === "admin";
+
+        // Logic: If maintenance is ON and I am NOT the admin, show maintenance page
+        if (data.maintenance_mode && !isAdmin) {
+          setMaintenance({ active: true, msg: data.broadcast_message });
+        }
+      } catch (err) {
+        console.error("System status check failed.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkStatus();
+  }, []);
+
+  if (loading)
+    return <div className="loading-screen">Verifying System Status...</div>;
+
+  if (maintenance.active) {
+    return <MaintenancePage message={maintenance.msg} />;
+  }
+
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -57,7 +95,7 @@ function App() {
             element={
               <>
                 <Header />
-                <main className="min-h-screen"> 
+                <main className="min-h-screen">
                   <Routes>
                     {/* Public Pages */}
                     <Route path="/" element={<Home />} />
@@ -66,8 +104,22 @@ function App() {
                     <Route path="/why-kykam" element={<Why />} />
                     <Route path="/login/worker" element={<WorkerLogin />} />
                     <Route path="/login/employer" element={<EmployerLogin />} />
-                    <Route path="/register/worker" element={<RegisterWorker />} />
-                    <Route path="/register/employer" element={<RegisterEmployer />} />
+                    <Route
+                      path="/register/worker"
+                      element={<RegisterWorker />}
+                    />
+                    <Route
+                      path="/register/employer"
+                      element={<RegisterEmployer />}
+                    />
+                    <Route
+                      path="/forgot-password"
+                      element={<ForgotPassword />}
+                    />
+                    <Route
+                      path="/reset-password/:uid/:token"
+                      element={<ResetPasswordConfirm />}
+                    />
 
                     {/* Private Worker Pages */}
                     <Route
