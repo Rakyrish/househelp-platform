@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Layout, Row, Col, Card, Statistic, Input, Select, Slider, Tag,
-  Button, Avatar, Drawer, message, Tabs, Badge,
+  Button, Avatar, Drawer, message, Tabs, Badge,Alert
 } from "antd";
 import {
   UserOutlined, SearchOutlined, FilterOutlined, CheckCircleOutlined,
@@ -10,6 +10,7 @@ import {
 } from "@ant-design/icons";
 import axios from "axios";
 import EmployerHires from "./EmployerHires";
+import AccountSettings from "./AccountSettings";
 
 const { Content } = Layout;
 const { Option } = Select;
@@ -83,6 +84,25 @@ const EmployerDashboard = () => {
       label: (<span><SearchOutlined /> Find Workers</span>),
       children: (
         <>
+        {/* Advice Banner for Employers */}
+          <Alert
+            className="mb-8 rounded-2xl border-none bg-indigo-50"
+            message={
+              <div className="flex items-center gap-3 py-1">
+                <div className="bg-indigo-600 p-2 rounded-xl">
+                  <SafetyCertificateOutlined className="text-white text-xl" />
+                </div>
+                <div>
+                  <h4 className="m-0 font-bold text-indigo-900">Priority Hiring Tip</h4>
+                  <p className="m-0 text-indigo-700 text-xs">
+                    Workers with the <span className="font-black text-indigo-900">VERIFIED</span> badge have undergone mandatory ID background checks. 
+                    They are 80% more likely to respond to your requests within 2 hours.
+                  </p>
+                </div>
+              </div>
+            }
+            type="info"
+          />
           <div className="flex flex-col md:flex-row gap-4 mb-8">
             <Input
               prefix={<SearchOutlined className="text-slate-400" />}
@@ -210,6 +230,12 @@ const EmployerDashboard = () => {
       label: (<span><HistoryOutlined /> My Hires</span>),
       // IMPORTANT: Pass fetchData here so releasing a worker updates the list
       children: <EmployerHires  />,
+    },
+    {
+      key: "3",
+      label: 'Security & Settings',
+      // IMPORTANT: Pass fetchData here so releasing a worker updates the list
+      children: <AccountSettings  />,
     },
   ];
 

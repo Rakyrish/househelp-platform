@@ -8,27 +8,38 @@ from .views import (
     EmployerLoginView,
     AdminUserManagementViewSet,
     WorkerDashboardViewSet,
-    WorkerViewSet,           # New: Used for the directory and hiring
-    WorkerBookingViewSet,    # New: Used for workers to accept/decline
+    WorkerViewSet,           
+    WorkerBookingViewSet,    
     EmployerDashboardViewSet
 )
 
+from users import views 
+
 router = DefaultRouter()
 
+# Admin routes
+router.register(r'admin/manage-users', views.AdminUserManagementViewSet, basename='admin-users')
+router.register(r'admin/manage-hires', views.AdminHiringRegistryViewSet, basename='admin-hires')
+router.register(r'admin/categories', views.CategoryViewSet, basename='admin-categories')
+
+# Business routes
+router.register(r'workers', views.WorkerViewSet, basename='workers-directory')
+# ... rest of your routes
+
 # Admin Management
-router.register(r'admin/manage-users', AdminUserManagementViewSet, basename='admin-manage-users')
+# router.register(r'admin/manage-users', AdminUserManagementViewSet, basename='admin-manage-users')
 
 # Worker Dashboard (Profile, Status, Password)
-router.register(r'worker/dashboard', WorkerDashboardViewSet, basename='worker-dashboard')
+router.register(r'worker/dashboard', views.WorkerDashboardViewSet, basename='worker-dashboard')
 
 # Worker Invites (Accepting/Declining jobs)
-router.register(r'worker-requests', WorkerBookingViewSet, basename='worker-requests')
+router.register(r'worker-requests', views.WorkerBookingViewSet, basename='worker-requests')
 
 # Employer Dashboard (Stats and My Requests)
-router.register(r'employer-dashboard', EmployerDashboardViewSet, basename='employer-dash')
+router.register(r'employer-dashboard',  views.EmployerDashboardViewSet, basename='employer-dash')
 
 # Worker Directory (Searching and Hiring)
-router.register(r'workers', WorkerViewSet, basename='workers-directory')
+# router.register(r'workers', WorkerViewSet, basename='workers-directory')
 
 urlpatterns = [
     # Auth Endpoints
@@ -37,6 +48,9 @@ urlpatterns = [
     path('login/worker/', WorkerLoginView.as_view(), name='login-worker'),
     path('login/employer/', EmployerLoginView.as_view(), name='login-employer'),
     path('login/admin/', AdminLoginView.as_view(), name='login-admin'),
+    path('admin/platform-settings/', views.PlatformSettingsView.as_view(), name='admin-platform'),
+    path('password-reset-request/', views.PasswordResetRequestView.as_view()),
+    path('password-reset-confirm/<str:uidb64>/<str:token>/', views.PasswordResetConfirmView.as_view()),
 
     # Include all router-generated URLs
     path('', include(router.urls)),

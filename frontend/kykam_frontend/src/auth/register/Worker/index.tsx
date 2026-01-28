@@ -162,9 +162,9 @@ const RegisterWorker = () => {
                   <select name="experience" value={formData.experience} onChange={handleChange} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#f3a82f]/20 outline-none cursor-pointer">
                     <option value="">Select Experience</option>
                     <option value="none">None</option>
-                    <option value="less_year">Less than a year</option>
-                    <option value="1_3yr">1-3 years</option>
-                    <option value="5plus_yr">5+ years</option>
+                    <option value="few months">Less than a year</option>
+                    <option value="1-3">1-3 years</option>
+                    <option value="5+">5+ years</option>
                   </select>
                 </div>
 

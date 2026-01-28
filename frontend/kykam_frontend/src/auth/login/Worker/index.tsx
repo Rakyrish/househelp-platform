@@ -18,27 +18,30 @@ function WorkerLogin() {
   };
 
   // 3. Handle Form Submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      await login({
-        phone: formData.phone,
-        password: formData.password,
-        type: "worker",
-      });
+  try {
+    await login({
+      phone: formData.phone,
+      password: formData.password,
+      type: "worker",
+    });
 
-      message.success("Login successful!");
-      navigate("/dashboard/worker");
-    } catch (err: any) {
-      setError(err || "Invalid credentials. Please try again.");
-      message.error("Login failed. Please check your credentials.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // ✅ If we got here, login succeeded
+    message.success("Login successful!");
+    navigate("/dashboard/worker");
+
+  } catch (err: any) {
+  
+    message.error("Invalid credentials. Please try again.")
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-100 to-yellow-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -131,6 +134,7 @@ function WorkerLogin() {
 
             <div className="text-sm">
               <button
+                 onClick={() => navigate('/forgot-password') }
                 type="button"
                 className="font-medium text-blue-600 hover:text-orange-500"
               >
