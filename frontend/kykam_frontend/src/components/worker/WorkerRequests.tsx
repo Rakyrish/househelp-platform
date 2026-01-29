@@ -24,7 +24,7 @@ import {
 import axios from 'axios'
 
 const { Title, Text } = Typography
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const statusColor: Record<string, string> = {
   pending: 'processing',
@@ -119,7 +119,7 @@ const WorkerRequests = () => {
             <Card
               key={req.id}
               className="mb-6 rounded-3xl border-none shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-              bodyStyle={{ padding: 24 }}
+              
             >
               {/* TOP */}
               <div className="flex items-start justify-between">

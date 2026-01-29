@@ -15,12 +15,11 @@ from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from rest_framework.views import APIView
 from django.conf import settings
+from django.utils import timezone
+from rest_framework.permissions import IsAdminUser
 
 User = get_user_model()
 
-# -----------------------------------------------------------
-# HELPER: Token Refresher
-# -----------------------------------------------------------
 def rotate_token(user):
     """
     Deletes existing token and creates a new one to reset 
@@ -28,6 +27,7 @@ def rotate_token(user):
     """
     Token.objects.filter(user=user).delete()
     return Token.objects.create(user=user)
+
 
 # -----------------------------------------------------------
 # AUTHENTICATION & REGISTRATION
@@ -141,7 +141,9 @@ class PasswordResetRequestView(APIView):
             print(f"--- User found: {user.username} ---")
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            reset_url = f"http://localhost:5173/reset-password/{uid}/{token}"
+           
+            reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
+
             
             try:
                 print("--- Attempting to send email via SMTP... ---")
@@ -180,3 +182,88 @@ class PasswordResetConfirmView(APIView):
             return Response({"message": "Password reset successful."}, status=status.HTTP_200_OK)
         
         return Response({"error": "Invalid or expired link."}, status=status.HTTP_400_BAD_REQUEST)
+    
+class SoftDeleteUserView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def patch(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id, is_deleted=False)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        user.is_deleted = True
+        user.deleted_at = timezone.now()
+        user.is_active = False  # VERY IMPORTANT
+        user.save()
+
+        # Kill tokens immediately
+        Token.objects.filter(user=user).delete()
+
+        return Response(
+            {"message": "User moved to trash successfully."},
+            status=status.HTTP_200_OK
+        )
+    
+class PermanentDeleteUserView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, user_id):
+        confirm = request.query_params.get("confirm")
+
+        if confirm != "true":
+            return Response(
+                {
+                    "error": "Confirmation required",
+                    "hint": "Add ?confirm=true to permanently delete this user"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        # Prevent self-deletion
+        if user == request.user:
+            return Response(
+                {"error": "You cannot delete your own account"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Delete related auth tokens
+        Token.objects.filter(user=user).delete()
+
+        # HARD DELETE
+        user.delete()
+
+        return Response(
+            {"message": "User permanently deleted from system"},
+            status=status.HTTP_200_OK
+        )
+    
+class DeactivateMyAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        user = request.user
+
+        if user.is_deleted:
+            return Response(
+                {"error": "Account already deactivated"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.is_deleted = True
+        user.deleted_at = timezone.now()
+        user.is_active = False
+        user.save()
+
+        # Kill all sessions immediately
+        Token.objects.filter(user=user).delete()
+
+        return Response(
+            {"message": "Your account has been deactivated successfully."},
+            status=status.HTTP_200_OK
+        )

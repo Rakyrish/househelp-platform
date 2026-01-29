@@ -9,6 +9,10 @@ class MaintenanceMiddleware:
         # 1. Always allow the settings check and Django admin
         if request.path.startswith('/api/admin/platform-settings/') or request.path.startswith('/admin/'):
             return self.get_response(request)
+        exempt_paths = ['/api/login/', '/api/login/admin'] 
+        
+        if request.path in exempt_paths:
+            return self.get_response(request)
 
         settings = PlatformSetting.objects.first()
         if settings and settings.maintenance_mode:

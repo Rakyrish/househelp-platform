@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
-
+from django.conf import settings
 from ..models import VerificationLog, Booking
 from ..serializers import (
      WorkerSerializer
@@ -15,6 +15,8 @@ from ..serializers import (
 from ..utils import send_verification_email
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from django.core.mail import EmailMultiAlternatives
+from django.utils.html import strip_tags
 
 User = get_user_model()
 
@@ -174,11 +176,9 @@ class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
     def hire(self, request, pk=None):
         worker_user = self.get_object()
         
-        # DEBUG: Check if employer is trying to hire themselves
         if request.user.id == worker_user.id:
             return Response({"error": "You cannot hire yourself."}, status=400)
 
-        # Check for existing pending request
         existing = Booking.objects.filter(
             employer=request.user, 
             worker=worker_user, 
@@ -194,20 +194,32 @@ class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
             worker=worker_user, 
             status='pending'
         )
+        subject = "New Hire Request - Kykam Agencies"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        to = worker_user.email
 
-        # Email Notification
+        # HTML Body (This looks better to the user)
+        html_content = f"""
+        <h3>Hello {worker_user.first_name},</h3>
+        <p>Exciting news! <strong>{request.user.first_name} {request.user.last_name}</strong> is interested in hiring you via Kykam Agencies.</p>
+        <p>Please log in to your dashboard to accept or decline this request.</p>
+        <br>
+        <p>Best regards,<br>The Kykam Team</p>
+        """
+        
+        # Plain text version (Crucial for avoiding spam filters)
+        text_content = strip_tags(html_content)
+
         try:
-            send_mail(
-                subject="New Hire Request - Kykam",
-                message=f"Hi {worker_user.first_name}, {request.user.first_name} wants to hire you!",
-                from_email="mbuguajohn367@gmail.com",
-                recipient_list=[worker_user.email],
-                fail_silently=True
-            )
+            msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
+            msg.attach_alternative(html_content, "text/html")
+            msg.send(fail_silently=False)
+            print(f"--- SUCCESS: Hire request email sent to {to} via SendGrid ---")
         except Exception as e:
-            print(f"Email failed: {e}")
+            # We log the error but don't break the response for the user
+            print(f"--- SENDGRID ERROR: {str(e)} ---")
 
-        return Response({"message": "Hire request sent!"})
+        return Response({"message": "Hire request sent successfully!"})
 
     @action(detail=True, methods=['post'])
     def withdraw_request(self, request, pk=None):

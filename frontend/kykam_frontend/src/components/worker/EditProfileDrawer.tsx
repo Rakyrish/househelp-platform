@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Drawer, Form, Input, Select, Button, message, Space, Upload } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -8,7 +8,7 @@ const { Option } = Select;
 const EditProfileDrawer = ({ visible, onClose, initialData, onUpdate }: any) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  const API = import.meta.env.VITE_API_BASE_URL;
 
   // Synchronize form with initialData when it changes or drawer opens
   useEffect(() => {
@@ -55,7 +55,7 @@ const EditProfileDrawer = ({ visible, onClose, initialData, onUpdate }: any) => 
     <Drawer
       title="Edit My Job Profile"
       placement="right"
-      width={window.innerWidth > 500 ? 450 : '100%'}
+      size={window.innerWidth > 500 ? 450 : '100%'}
       onClose={onClose}
       open={visible}
       extra={

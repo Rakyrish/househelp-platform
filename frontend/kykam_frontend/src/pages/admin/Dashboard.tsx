@@ -63,7 +63,6 @@ const Dashboard = () => {
         axios.get(`${API}/api/admin/manage-users/`, { headers }),
         axios.get(`${API}/api/admin/manage-hires/`, { headers }) // Endpoint for the registry
       ]);
-      console.log("the data in the admin is", statsRes.data);
       
       setStats(statsRes.data);
       setUsers(usersRes.data);

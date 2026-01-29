@@ -10,7 +10,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = True
+import os
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'host.docker.internal', '*']
 CORS_ALLOW_ALL_ORIGINS = True  # For development only
 # OR
@@ -128,7 +130,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True, 
 }
 
-TOKEN_EXPIRED_AFTER_SECONDS = 300  # Token expires in 5 minutes
+TOKEN_EXPIRED_AFTER_SECONDS = 3600  # Token expires in 5 minutes
 
 # --- SENDGRID CONFIGURATION ---
 EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"

@@ -51,7 +51,14 @@ urlpatterns = [
     path('admin/platform-settings/', views.PlatformSettingsView.as_view(), name='admin-platform'),
     path('password-reset-request/', views.PasswordResetRequestView.as_view()),
     path('password-reset-confirm/<str:uidb64>/<str:token>/', views.PasswordResetConfirmView.as_view()),
-
+    path("int:user_id>/soft-delete/", views.SoftDeleteUserView.as_view()),
+    path("<int:user_id>/permanent-delete/", views.PermanentDeleteUserView.as_view()),
+    path("account/deactivate/", views.DeactivateMyAccountView.as_view()),
+    # Use 'admin/users/' to match your frontend XHR request
+    path('admin/users/<int:user_id>/reset-password/', views.AdminUserPasswordResetView.as_view(), name='admin-password-reset'),
+    path('admin/manage-users/<int:user_id>/permanent_erase/', views.AdminPermanentDeleteUserView.as_view(), name='admin-permanent-erase'),
+    path('contact-us/', views.ContactUsView.as_view()),
+   
     # Include all router-generated URLs
     path('', include(router.urls)),
 ]

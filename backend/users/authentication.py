@@ -17,7 +17,7 @@ class ExpiringTokenAuthentication(TokenAuthentication):
 
         # We pull the limit from settings. Defaulting to 600 seconds (10 mins) if not found
         # You set this in settings.py as TOKEN_EXPIRED_AFTER_SECONDS
-        expiry_limit = getattr(settings, 'TOKEN_EXPIRED_AFTER_SECONDS', 600)
+        expiry_limit = getattr(settings, 'TOKEN_EXPIRED_AFTER_SECONDS', 3600)
         
         # Check if the token is older than our limit
         is_expired = token.created < timezone.now() - timedelta(seconds=expiry_limit)

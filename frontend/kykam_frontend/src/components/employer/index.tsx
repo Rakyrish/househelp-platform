@@ -42,9 +42,7 @@ const EmployerDashboard = () => {
         //   min_salary: salaryRange[0],
         //   max_salary: salaryRange[1],
         // }
-      });
-      console.log('workers data', workerRes.data);
-      
+      });    
       setWorkers(workerRes.data);
 
       // 2. Fetch Stats

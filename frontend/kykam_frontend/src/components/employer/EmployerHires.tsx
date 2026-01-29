@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { 
   Table, Tag, Button, Card, message, Typography, 
-  Space, Popconfirm, Avatar, Empty,Alert
+  Space, Popconfirm, Avatar, Empty, Alert
 } from 'antd';
 import { 
   PhoneOutlined, ClockCircleOutlined, UserOutlined, 
   CloseCircleOutlined, DeleteOutlined, 
-  UnlockOutlined, CheckCircleOutlined, ReloadOutlined,SafetyCertificateOutlined
+  UnlockOutlined, CheckCircleOutlined, ReloadOutlined, SafetyCertificateOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Title, Text } = Typography;
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const EmployerHires = () => {
   const [data, setData] = useState([]);
@@ -62,6 +62,17 @@ const EmployerHires = () => {
     }
   };
 
+  // Status Config Helper
+  const getStatusConfig = (status: string) => {
+    const configs: Record<string, { color: string, label: string, icon: any }> = {
+      accepted: { color: 'success', label: 'Active Hire', icon: <CheckCircleOutlined /> },
+      pending: { color: 'processing', label: 'Awaiting Response', icon: <ClockCircleOutlined /> },
+      declined: { color: 'error', label: 'Declined', icon: <CloseCircleOutlined /> },
+      completed: { color: 'default', label: 'Completed', icon: <CheckCircleOutlined /> },
+    };
+    return configs[status] || { color: 'default', label: status, icon: null };
+  };
+
   const columns = [
     {
       title: 'Professional',
@@ -90,13 +101,7 @@ const EmployerHires = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
-        const statusConfig: Record<string, { color: string, label: string, icon: any }> = {
-          accepted: { color: 'success', label: 'Active Hire', icon: <CheckCircleOutlined /> },
-          pending: { color: 'processing', label: 'Awaiting Response', icon: <ClockCircleOutlined /> },
-          declined: { color: 'error', label: 'Declined', icon: <CloseCircleOutlined /> },
-          completed: { color: 'default', label: 'Completed', icon: <CheckCircleOutlined /> },
-        };
-        const config = statusConfig[status] || { color: 'default', label: status, icon: null };
+        const config = getStatusConfig(status);
         return (
           <Tag color={config.color} icon={config.icon} className="rounded-full border-none px-3 font-bold text-[11px]">
             {config.label.toUpperCase()}
@@ -133,37 +138,23 @@ const EmployerHires = () => {
                 className="bg-emerald-500 border-none rounded-xl font-bold shadow-md shadow-emerald-100 hover:!bg-emerald-600"
                 onClick={() => window.open(`tel:${record.worker_phone}`)}
               >
-                Call {record.worker_phone.split(' ')[0]}
+                Call
               </Button>
-              
               <Popconfirm
                 title="Complete Job?"
-                description="This will release the professional for other employers."
+                description="Release the professional?"
                 onConfirm={() => handleRelease(record.id)}
                 okText="Release"
                 cancelText="Cancel"
-                okButtonProps={{ className: 'bg-blue-600' }}
               >
-                <Button 
-                  icon={<UnlockOutlined />} 
-                  className="rounded-xl border-slate-200 text-slate-500 hover:text-blue-500"
-                >
+                <Button icon={<UnlockOutlined />} className="rounded-xl border-slate-200 text-slate-500">
                   Release
                 </Button>
               </Popconfirm>
             </>
           ) : (
-            <Popconfirm
-              title="Remove from history?"
-              onConfirm={() => handleDelete(record.id)}
-              okText="Delete"
-              okType="danger"
-            >
-              <Button 
-                type="text" 
-                icon={<DeleteOutlined />} 
-                className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
-              />
+            <Popconfirm title="Remove?" onConfirm={() => handleDelete(record.id)}>
+              <Button type="text" icon={<DeleteOutlined />} className="text-slate-300 hover:text-red-500" />
             </Popconfirm>
           )}
         </Space>
@@ -172,55 +163,125 @@ const EmployerHires = () => {
   ];
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="p-4 md:p-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <Card 
-        className="rounded-[2.5rem] border-none shadow-sm overflow-hidden"
-        styles={{ body: { padding: '2rem' } }}
+        className="rounded-3xl md:rounded-[2.5rem] border-none shadow-xl overflow-hidden"
+        styles={{ body: { padding: '1.5rem' } }}
       >
-         {/* Advice Banner for Employers */}
-          <Alert
-            className="mb-8 rounded-2xl border-none bg-indigo-50"
-            message={
-              <div className="flex items-center gap-3 py-1">
-                <div className="bg-indigo-600 p-2 rounded-xl">
-                  <SafetyCertificateOutlined className="text-white text-xl" />
-                </div>
-                <div>
-                  <h4 className="m-0 font-bold text-indigo-900">Humble Request</h4>
-                  <p className="m-0 text-indigo-700 text-xs">
-                    if <span className="font-black text-indigo-900">Contract</span> is done kindly release worker to allow being seeing by other
-                    employers. Thanks.
-                  </p>
-                </div>
+        {/* Advice Banner */}
+        <Alert
+          className="mb-6 rounded-2xl border-none bg-indigo-50"
+          message={
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-1">
+              <div className="bg-indigo-600 p-2 rounded-xl hidden sm:block">
+                <SafetyCertificateOutlined className="text-white text-xl" />
               </div>
-            }
-            type="info"
-          />
-        <div className="flex justify-between items-center mb-10">
+              <div>
+                <h4 className="m-0 font-bold text-indigo-900 text-sm">Action Required</h4>
+                <p className="m-0 text-indigo-700 text-[11px] leading-relaxed">
+                  When the contract is finished, please <span className="font-bold underline">Release</span> the professional so they can be available for others.
+                </p>
+              </div>
+            </div>
+          }
+          type="info"
+        />
+
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <Title level={4} className="!m-0 !font-black text-slate-800">History & Management</Title>
-            <Text className="text-slate-400">Track and manage your current professional engagements.</Text>
+            <Title level={3} className="!m-0 !font-black text-slate-800 tracking-tight">Management</Title>
+            <Text className="text-slate-400 text-sm">Monitor your current hires and history.</Text>
           </div>
           <Button 
             icon={<ReloadOutlined />} 
             onClick={fetchMyRequests}
             loading={loading}
-            className="rounded-2xl border-slate-100 h-12 px-6 font-bold text-slate-500 shadow-sm"
+            className="rounded-xl border-slate-200 h-10 px-4 font-bold text-slate-500 w-full sm:w-auto"
           >
             Refresh
           </Button>
         </div>
-       
 
-        <Table 
-          columns={columns} 
-          dataSource={data} 
-          loading={loading} 
-          rowKey="id"
-          pagination={{ pageSize: 6, hideOnSinglePage: true }}
-          locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No hiring history found" className="py-12" /> }}
-          className="custom-management-table"
-        />
+        {/* Desktop View */}
+        <div className="hidden md:block">
+          <Table 
+            columns={columns} 
+            dataSource={data} 
+            loading={loading} 
+            rowKey="id"
+            pagination={{ pageSize: 6, hideOnSinglePage: true }}
+            className="custom-management-table"
+          />
+        </div>
+
+        {/* Mobile View (List of Cards) */}
+        <div className="md:hidden flex flex-col gap-4">
+          {loading ? (
+             <div className="py-10 text-center text-slate-400">Loading records...</div>
+          ) : data.length === 0 ? (
+            <Empty description="No history found" />
+          ) : (
+            data.map((record: any) => {
+              const config = getStatusConfig(record.status);
+              return (
+                <div key={record.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 shadow-sm">
+                  <div className="flex justify-between items-start mb-4">
+                    <Space>
+                      <Avatar src={record.passport_img} size={50} className="border-2 border-white shadow-sm" />
+                      <div>
+                        <div className="font-bold text-slate-800 capitalize leading-tight">{record.worker_name}</div>
+                        <div className="text-[10px] font-bold text-blue-500 uppercase">{record.worker_type?.replace('_', ' ')}</div>
+                      </div>
+                    </Space>
+                    <Tag color={config.color} className="rounded-full m-0 text-[10px] font-bold border-none">
+                      {config.label}
+                    </Tag>
+                  </div>
+                  
+                  <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 mb-4">
+                    <div className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Request Date</div>
+                    <div className="text-xs font-bold text-slate-600">
+                      {new Date(record.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {record.status === 'accepted' ? (
+                      <>
+                        <Button 
+                          block
+                          type="primary"
+                          icon={<PhoneOutlined />}
+                          className="bg-emerald-500 border-none rounded-xl h-10 font-bold"
+                          onClick={() => window.open(`tel:${record.worker_phone}`)}
+                        >
+                          Call ({record.worker_phone})
+                        </Button>
+                        <Popconfirm title="Release Professional?" onConfirm={() => handleRelease(record.id)}>
+                          <Button block icon={<UnlockOutlined />} className="rounded-xl h-10 border-slate-200">
+                            Release
+                          </Button>
+                        </Popconfirm>
+                      </>
+                    ) : (
+                      <Button 
+                        block
+                        danger
+                        type="dashed"
+                        icon={<DeleteOutlined />}
+                        className="rounded-xl h-10"
+                        onClick={() => handleDelete(record.id)}
+                      >
+                        Remove History
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </Card>
 
       <style>{`
