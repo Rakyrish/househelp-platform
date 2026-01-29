@@ -1,12 +1,10 @@
-version: '3.9'
 
 services:
   backend:
-    image: ${BACKEND}
     restart: always
     user: root
     env_file: .env
-    # ADD THESE: Docker needs these to send real emails
+  
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - DBNAME=${DBNAME}
@@ -14,8 +12,7 @@ services:
       - DBPORT=${DBPORT}
       - DBHOST=${DBHOST}
       - DBPASSWORD=${DBPASSWORD}
-      - EMAIL_USER=${EMAIL_USER}       # IMPORTANT: Pass from .env
-      - EMAIL_PASSWORD=${EMAIL_PASSWORD} # IMPORTANT: Pass from .env
+      - EMAIL_USER=${EMAIL_USER}       
     build: 
       context: ./backend
       dockerfile: Dockerfile

@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const AccountSettings = () => {
   const [form] = Form.useForm();
-  const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  const API = import.meta.env.VITE_API_BASE_URL;
 
   const handleChangePassword = async (values: any) => {
     try {
@@ -20,19 +20,52 @@ const AccountSettings = () => {
     }
   };
 
-  const confirmDelete = () => {
-    Modal.confirm({
-      title: 'Are you absolutely sure?',
-      icon: <WarningOutlined className="text-red-500" />,
-      content: 'This will permanently delete your worker profile and you will no longer appear in search results for employers.',
-      okText: 'Delete My Account',
-      okType: 'danger',
-      onOk: () => {
-        // API call to delete account
-        message.loading("Closing account...");
-      },
-    });
-  };
+ const confirmDelete = () => {
+  Modal.confirm({
+    title: 'Are you absolutely sure?',
+    icon: <WarningOutlined className="text-red-500" />,
+    content: (
+      <div className="text-slate-600">
+        This will deactivate your account.
+        <br />
+        You will be logged out immediately and your profile will no longer be visible.
+      </div>
+    ),
+    okText: 'Yes, deactivate my account',
+    okType: 'danger',
+    cancelText: 'Cancel',
+    onOk: async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        message.loading({ content: 'Closing account...', key: 'delete' });
+
+        await axios.patch(
+          `${API}/api/account/deactivate/`,
+          {},
+          {
+            headers: { Authorization: `Token ${token}` },
+          }
+        );
+
+        localStorage.removeItem('token');
+
+        message.success({
+          content: 'Account deactivated successfully',
+          key: 'delete',
+        });
+
+        // Redirect after delete
+        window.location.href = '/login';
+      } catch (err: any) {
+        message.error(
+          err.response?.data?.error || 'Failed to deactivate account'
+        );
+      }
+    },
+  });
+};
+
 
   return (
     <Card className="rounded-2xl border-none shadow-sm overflow-hidden">

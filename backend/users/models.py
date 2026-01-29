@@ -54,6 +54,7 @@ class User(AbstractUser):
         null=True, 
         blank=True
     )
+    
     is_available = models.BooleanField(default=True)
     current_employer = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)

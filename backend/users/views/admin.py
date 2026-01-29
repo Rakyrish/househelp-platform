@@ -16,7 +16,9 @@ from ..utils import send_verification_email
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework import views, status, permissions
 from rest_framework.response import Response
-
+from django.core.mail import EmailMultiAlternatives
+from django.utils.html import strip_tags
+from django.conf import settings
 
 
 User = get_user_model()
@@ -181,29 +183,30 @@ class PlatformSettingsView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AdminUserPasswordResetView(APIView):
+    # Ensure both token and session (for browser tests) are allowed
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request, user_id):
-        # Security: Ensure the person making the request is actually an admin
+        # 1. Security Check
         if request.user.role != 'admin':
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "Unauthorized: Admin access required"}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             target_user = User.objects.get(id=user_id)
             new_password = request.data.get('password')
 
             if not new_password:
-                return Response({"error": "Password is required"}, status=400)
+                return Response({"error": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # 1. Update Password
+            # 2. Update Password
             target_user.set_password(new_password)
             target_user.save()
 
-            # 2. Invalidate current tokens (forces a fresh login)
-            from rest_framework.authtoken.models import Token
+            # 3. Clean up existing tokens so the user is logged out everywhere
             Token.objects.filter(user=target_user).delete()
 
-            # 3. LOG THE ACTION (Important for audit trails)
+            # 4. Create Audit Log
             VerificationLog.objects.create(
                 worker=target_user,
                 admin=request.user,
@@ -213,4 +216,77 @@ class AdminUserPasswordResetView(APIView):
 
             return Response({"message": f"Password for {target_user.first_name} updated successfully."})
         except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+class AdminPermanentDeleteUserView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
+
+        # ❌ Never allow admin to delete themselves
+        if user == request.user:
+            return Response(
+                {"error": "You cannot permanently delete your own account"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # ❌ Only allow permanent delete IF already soft-deleted
+        if not user.is_deleted:
+            return Response(
+                {"error": "User must be moved to trash before permanent deletion"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Cleanup tokens
+        Token.objects.filter(user=user).delete()
+
+        # HARD DELETE (💀 irreversible)
+        user.delete()
+
+        return Response(
+            {"message": "User permanently erased from the system"},
+            status=status.HTTP_200_OK
+        )
+class ContactUsView(APIView):
+    permission_classes = [AllowAny] # Allow everyone to contact you
+
+    def post(self, request):
+        name = request.data.get('name')
+        sender_email = request.data.get('email')
+        subject_text = request.data.get('subject')
+        message_body = request.data.get('message')
+
+        if not all([name, sender_email, message_body]):
+            return Response({"error": "Please fill in all fields."}, status=400)
+
+        # The email YOU receive
+        full_subject = f"KYKAM INQUIRY: {subject_text}"
+        
+        html_content = f"""
+        <h2>New Inquiry from Kykam Platform</h2>
+        <p><strong>Name:</strong> {name}</p>
+        <p><strong>Reply to:</strong> {sender_email}</p>
+        <p><strong>Message:</strong></p>
+        <p>{message_body}</p>
+        """
+        
+        text_content = strip_tags(html_content)
+
+        try:
+            msg = EmailMultiAlternatives(
+                full_subject,
+                text_content,
+                settings.DEFAULT_FROM_EMAIL, 
+                [settings.DEFAULT_FROM_EMAIL] 
+            )
+            # This allows you to click 'Reply' in your Gmail and email the user back directly
+            msg.extra_headers = {'Reply-To': sender_email}
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
+
+            return Response({"success": "Your message has been received. We will get back to you soon!"})
+        except Exception as e:
+            return Response({"error": "System busy. Please try again later."}, status=500)

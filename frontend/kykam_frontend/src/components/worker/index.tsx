@@ -17,7 +17,7 @@ import AccountSettings from "./AccountSettings";
 import WorkerRequests from "./WorkerRequests";
 
 const { Title, Text } = Typography;
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const WorkerDashboard = () => {
   const { token, logout } = useAuth();
@@ -104,7 +104,7 @@ const WorkerDashboard = () => {
                 />
               ) : !profile.is_verified && (
                 <Alert
-                  message="Verification Pending"
+                  title="Verification Pending"
                   description="Our team is currently reviewing your documents."
                   type="info"
                   showIcon
@@ -125,7 +125,7 @@ const WorkerDashboard = () => {
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <Text className="text-slate-500 text-sm leading-relaxed">{profile.experience || "No experience summary provided yet."}</Text>
+                    <Text className="text-slate-500 text-sm leading-relaxed">Experience: {profile.experience || "No experience summary provided yet."} years</Text>
                     <div className="flex gap-2">
                       <Tag className="rounded-full px-4 border-none bg-blue-100 text-blue-600 font-bold">Open to Work</Tag>
                     </div>
@@ -217,7 +217,7 @@ const WorkerDashboard = () => {
             </div>
             <div>
               <Title level={2} className="!m-0 !font-black text-slate-800">Hi, {profile.first_name || 'Worker'}!</Title>
-              <Text className="text-slate-400 font-medium">Profile ID: #KYK-{profile.id?.toString().padStart(4, '0')}</Text>
+            
             </div>
           </div>
           <div className="mt-4 md:mt-0 flex gap-3">

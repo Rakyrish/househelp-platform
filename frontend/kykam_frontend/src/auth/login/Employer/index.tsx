@@ -19,6 +19,7 @@ function EmployerLogin() {
 
   // 3. Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
+   
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -33,8 +34,6 @@ function EmployerLogin() {
       message.success("Login successful!");
       navigate("/dashboard/employer");
     } catch (err: any) {
-      // FIX: Extract the string message to prevent the "Objects are not valid" error
-      
      message.error("Invalid phone number or password.")   
      
     } finally {

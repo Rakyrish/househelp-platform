@@ -31,6 +31,7 @@ import MaintenancePage from "./pages/MaintenancePage";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetPasswordConfirm from "./auth/ResetPasswordConfirm";
 import axios from "axios";
+import ContactUs from "./layout/ContactUs";
 
 function App() {
   const [maintenance, setMaintenance] = useState({ active: false, msg: "" });
@@ -104,6 +105,8 @@ function App() {
                     <Route path="/why-kykam" element={<Why />} />
                     <Route path="/login/worker" element={<WorkerLogin />} />
                     <Route path="/login/employer" element={<EmployerLogin />} />
+                   
+                    <Route path="/contact" element={<ContactUs />} />
                     <Route
                       path="/register/worker"
                       element={<RegisterWorker />}
@@ -120,7 +123,6 @@ function App() {
                       path="/reset-password/:uid/:token"
                       element={<ResetPasswordConfirm />}
                     />
-
                     {/* Private Worker Pages */}
                     <Route
                       path="/dashboard/worker"
@@ -130,7 +132,6 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-
                     {/* Private Employer Pages */}
                     <Route
                       path="/dashboard/employer"
@@ -140,7 +141,6 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-
                     <Route
                       path="/dashboard/workerDir"
                       element={
@@ -149,7 +149,6 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-
                     {/* Fallback for anything not matched inside the public section */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
