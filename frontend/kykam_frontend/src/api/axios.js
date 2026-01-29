@@ -1,19 +1,27 @@
 import axios from 'axios';
 
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
-    baseURL: VITE_API_BASE_URL + '/api/',
+    baseURL: VITE_API_BASE_URL ? `${VITE_API_BASE_URL}/api/` : '/api/',
     // withCredentials: true, 
 });
 
-// Automatically add the Access Token to every request
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('access_token'); 
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.response.use(
+    (response) => response, // If request is successful, do nothing
+    (error) => {
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            console.warn("Token expired or unauthorized. Logging out...");
+            
+            // 1. Clear Local Storage
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            
+            // 2. Redirect to login page
+            window.location.href = '/login'; 
+        }
+        return Promise.reject(error);
     }
-    return config;
-});
+);
 
 export default api;

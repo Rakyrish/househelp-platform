@@ -5,7 +5,7 @@ from .models import User
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     # What you see in the main list
-    list_display = ('username', 'full_name','phone', 'role', 'id_number', 'display_id_front', 'is_verified')
+    list_display = ('username', 'full_name','phone', 'role', 'id_number', 'display_id_front', 'is_verified', 'family_size', 'expected_salary', 'salary')
     list_filter = ('role', 'is_verified', 'location')
     search_fields = ('username', 'id_number', 'phone')
     list_editable = ('is_verified',) # Quick toggle verification without leaving the page
@@ -25,7 +25,7 @@ class UserAdmin(admin.ModelAdmin):
     # Organize the detail view when you click a user
     fieldsets = (
         ('Authentication', {'fields': ('username', 'password', 'email', 'role')}),
-        ('Personal Info', {'fields': ('first_name', 'last_name', 'phone', 'location')}),
+        ('Personal Info', {'fields': ('first_name', 'last_name', 'phone', 'location','family_size', 'expected_salary', 'salary')}),
         ('Traceability & Docs', {'fields': ('id_number', 'id_photo_front', 'id_photo_back', 'is_verified')}),
         ('Emergency Contact', {'fields': ('kin_name', 'kin_phone', 'kin_relationship')}),
     )

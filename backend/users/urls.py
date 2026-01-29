@@ -4,32 +4,61 @@ from .views import (
     AdminLoginView, 
     RegisterWorkerView, 
     RegisterEmployerView, 
-    HelperListView, 
     WorkerLoginView, 
     EmployerLoginView,
-    AdminUserManagementViewSet  
+    AdminUserManagementViewSet,
+    WorkerDashboardViewSet,
+    WorkerViewSet,           
+    WorkerBookingViewSet,    
+    EmployerDashboardViewSet
 )
 
-# 1. Setup the Router for Admin Management
-# This handles: 
-# GET /api/admin/manage-users/ (List all)
-# GET /api/admin/manage-users/{id}/ (Retrieve detail)
-# POST /api/admin/manage-users/{id}/approve_worker/ (Custom Action)
+from users import views 
+
 router = DefaultRouter()
-router.register(r'admin/manage-users', AdminUserManagementViewSet, basename='admin-manage-users')
+
+# Admin routes
+router.register(r'admin/manage-users', views.AdminUserManagementViewSet, basename='admin-users')
+router.register(r'admin/manage-hires', views.AdminHiringRegistryViewSet, basename='admin-hires')
+router.register(r'admin/categories', views.CategoryViewSet, basename='admin-categories')
+
+# Business routes
+router.register(r'workers', views.WorkerViewSet, basename='workers-directory')
+# ... rest of your routes
+
+# Admin Management
+# router.register(r'admin/manage-users', AdminUserManagementViewSet, basename='admin-manage-users')
+
+# Worker Dashboard (Profile, Status, Password)
+router.register(r'worker/dashboard', views.WorkerDashboardViewSet, basename='worker-dashboard')
+
+# Worker Invites (Accepting/Declining jobs)
+router.register(r'worker-requests', views.WorkerBookingViewSet, basename='worker-requests')
+
+# Employer Dashboard (Stats and My Requests)
+router.register(r'employer-dashboard',  views.EmployerDashboardViewSet, basename='employer-dash')
+
+# Worker Directory (Searching and Hiring)
+# router.register(r'workers', WorkerViewSet, basename='workers-directory')
 
 urlpatterns = [
-    # --- Public & Authentication Endpoints ---
+    # Auth Endpoints
     path('register/worker/', RegisterWorkerView.as_view(), name='register-worker'),
     path('register/employer/', RegisterEmployerView.as_view(), name='register-employer'),
-    path('workers/', HelperListView.as_view(), name='worker-list'),
-    
-    # --- Login Endpoints ---
     path('login/worker/', WorkerLoginView.as_view(), name='login-worker'),
     path('login/employer/', EmployerLoginView.as_view(), name='login-employer'),
     path('login/admin/', AdminLoginView.as_view(), name='login-admin'),
-
-    # --- Admin Management Endpoints (ViewSets) ---
-    # We use include(router.urls) to pull in all the management logic at once
+    path('admin/platform-settings/', views.PlatformSettingsView.as_view(), name='admin-platform'),
+    path('password-reset-request/', views.PasswordResetRequestView.as_view()),
+    path('password-reset-confirm/<str:uidb64>/<str:token>/', views.PasswordResetConfirmView.as_view()),
+    path("int:user_id>/soft-delete/", views.SoftDeleteUserView.as_view()),
+    path("<int:user_id>/permanent-delete/", views.PermanentDeleteUserView.as_view()),
+    path("account/deactivate/", views.DeactivateMyAccountView.as_view()),
+    # Use 'admin/users/' to match your frontend XHR request
+    path('admin/users/<int:user_id>/reset-password/', views.AdminUserPasswordResetView.as_view(), name='admin-password-reset'),
+    path('admin/manage-users/<int:user_id>/permanent_erase/', views.AdminPermanentDeleteUserView.as_view(), name='admin-permanent-erase'),
+    path('contact-us/', views.ContactUsView.as_view()),
+   
+    # Include all router-generated URLs
     path('', include(router.urls)),
 ]

@@ -1,33 +1,90 @@
-import React, { useState } from 'react';
-import { message } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { message, Spin } from "antd";
+import { useNavigate } from "react-router-dom";
+import { 
+  User, Mail, Lock, Phone, MapPin, Briefcase, 
+  IdCard, ShieldAlert, Upload, X, ArrowRight, DollarSign
+} from "lucide-react";
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+// --- HELPER COMPONENTS (DEFINED OUTSIDE TO PREVENT FOCUS LOSS) ---
+
+const FormInput = ({ label, icon: Icon, ...props }: any) => (
+  <div className="flex flex-col space-y-1.5">
+    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
+      {label}
+    </label>
+    <div className="relative group">
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#f3a82f] transition-colors">
+        <Icon size={18} />
+      </div>
+      <input 
+        {...props} 
+        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#f3a82f]/20 focus:border-[#f3a82f] outline-none transition-all placeholder:text-slate-400 text-slate-700"
+      />
+    </div>
+  </div>
+);
+
+const ImageUpload = ({ label, file, setFile }: any) => (
+  <div className="relative group bg-white border-2 border-dashed border-slate-200 rounded-2xl p-4 flex flex-col items-center hover:border-[#f3a82f] transition-all">
+    <span className="text-[10px] font-bold text-slate-400 uppercase mb-3">{label}</span>
+    {file ? (
+      <div className="relative w-full">
+        <img src={URL.createObjectURL(file)} className="h-32 w-full object-cover rounded-xl shadow-sm" alt="preview" />
+        <button 
+          type="button" 
+          onClick={() => setFile(null)} 
+          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-md cursor-pointer"
+        >
+          <X size={14} />
+        </button>
+      </div>
+    ) : (
+      <label className="cursor-pointer flex flex-col items-center py-6 w-full">
+        <Upload className="text-slate-300 group-hover:text-[#f3a82f] mb-2" size={24} />
+        <span className="text-xs text-slate-400 font-medium text-center">Tap to Upload</span>
+        <input 
+          type="file" 
+          accept="image/*" 
+          className="hidden" 
+          onChange={(e) => setFile(e.target.files?.[0] || null)} 
+        />
+      </label>
+    )}
+  </div>
+);
+
+// --- MAIN COMPONENT ---
 
 const RegisterWorker = () => {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    password: '',
-    confirm_password: '',
-    phone: '',
-    location: '',
-    age: '',
-    gender: 'other',
-    id_number: '',
-    kin_name: '',
-    kin_phone: '',
-    kin_relationship: '',
+    full_name: "",
+    email: "",
+    password: "",
+    confirm_password: "",
+    phone: "",
+    location: "",
+    age: "",
+    gender: "other",
+    id_number: "",
+    kin_name: "",
+    kin_phone: "",
+    kin_relationship: "",
+    experience: "",
+    expected_salary: ""
   });
 
   const [idFront, setIdFront] = useState<File | null>(null);
   const [idBack, setIdBack] = useState<File | null>(null);
+  const [passportImg, setPassportImg] = useState<File | null>(null);
   const navigate = useNavigate();
 
-  // 1. HELPER: Restrict input to numbers only in real-time
   const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const onlyNums = value.replace(/\D/g, ''); // Remove all non-numeric characters
+    const onlyNums = value.replace(/\D/g, "");
     setFormData((prev) => ({ ...prev, [name]: onlyNums }));
   };
 
@@ -37,209 +94,145 @@ const RegisterWorker = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // --- SECURITY & VALIDATION ---
-    
-    // Password length check
-    if (formData.password.length < 4) {
-      return message.error("Password is too short (minimum 4 characters).");
-    }
-
-    // Password match check
     if (formData.password !== formData.confirm_password) {
       return message.error("Passwords do not match!");
     }
-
-    // Phone validation: Must start with 07 and be 10 digits total
-    const phoneRegex = /^07\d{8}$/;
-    if (!phoneRegex.test(formData.phone)) {
-      return message.error("Phone number must start with 07 and be exactly 10 digits.");
-    }
-
-    // Kin Phone validation
-    if (!phoneRegex.test(formData.kin_phone)) {
-      return message.error("Next of Kin phone must start with 07 and be 10 digits.");
-    }
-
-    // --- DATA PREPARATION ---
+    
+    setLoading(true);
     const data = new FormData();
     Object.keys(formData).forEach((key) => {
-      // We don't send confirm_password to the Django backend
-      if (key !== 'confirm_password') {
-        data.append(key, formData[key as keyof typeof formData]);
-      }
+      if (key !== "confirm_password") data.append(key, (formData as any)[key]);
     });
 
-    if (idFront) data.append('id_photo_front', idFront);
-    if (idBack) data.append('id_photo_back', idBack);
+    if (idFront) data.append("id_photo_front", idFront);
+    if (idBack) data.append("id_photo_back", idBack);
+    if (passportImg) data.append("passport_img", passportImg);
 
     try {
       const response = await fetch(`${API}/api/register/worker/`, {
-        method: 'POST',
+        method: "POST",
         body: data,
-       
       });
 
       if (response.ok) {
         message.success("Registration Successful!");
-        // Reset Form
-        setFormData({
-          full_name: '', email: '', password: '', confirm_password: '',
-          phone: '', location: '', age: '', gender: 'other',
-          id_number: '', kin_name: '', kin_phone: '', kin_relationship: ''
-        });
-        setIdFront(null);
-        setIdBack(null);
-         navigate('/login/worker')
+        navigate("/login/worker");
       } else {
-        const errorData = await response.json();
-        console.error("Backend Error:", errorData);
-        message.error("Registration failed. Check if email or ID is already used.");
+        await response.json();
+        message.error("Registration failed. Email or ID may already be in use.");
       }
     } catch (error) {
-      console.error("Network Error:", error);
       message.error("Could not connect to the server.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-100 to-yellow-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="bg-[#f3a82f] p-6 text-white text-center">
-          <h2 className="text-3xl font-bold">Worker Registration</h2>
-          <p className="mt-2 opacity-90">Join the Kykam network and start earning.</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+    <div className="min-h-screen bg-[#f8fafc] py-12 px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           
-          {/* SECTION 1: Personal Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <h3 className="col-span-full font-bold text-gray-700 border-b pb-2">Personal Information</h3>
+          <div className="bg-[#f3a82f] px-8 py-10 text-white relative">
+            <div className="relative z-10">
+              <h2 className="text-3xl font-extrabold tracking-tight text-white">Worker Registration</h2>
+              <p className="mt-2 text-orange-50 opacity-90 font-medium">Create your profile and start getting job offers.</p>
+            </div>
+            <Briefcase className="absolute right-8 top-1/2 -translate-y-1/2 opacity-10" size={100} />
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-8 space-y-10">
             
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">Full Name*</label>
-              <input name="full_name" type="text" value={formData.full_name} onChange={handleChange} required className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" />
-            </div>
+            <section>
+              <div className="flex items-center gap-2 mb-6 text-slate-800">
+                <div className="p-2 bg-orange-100 rounded-lg text-[#f3a82f]"><User size={20}/></div>
+                <h3 className="text-lg font-bold">Personal Details</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <FormInput label="Full Name*" icon={User} name="full_name" type="text" value={formData.full_name} onChange={handleChange} required placeholder="John Doe" />
+                <FormInput label="Email Address*" icon={Mail} name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="john@example.com" />
+                <FormInput label="Password*" icon={Lock} name="password" type="password" value={formData.password} onChange={handleChange} required />
+                <FormInput label="Confirm Password*" icon={Lock} name="confirm_password" type="password" value={formData.confirm_password} onChange={handleChange} required />
+                <FormInput label="Phone Number* (Prefer Whatsapp Number) " icon={Phone} name="phone" type="text" inputMode="numeric" value={formData.phone} onChange={handleNumericChange} required placeholder="0712345678" />
+                <FormInput label="Expected Salary*" icon={DollarSign} name="expected_salary" type="text" inputMode="numeric" value={formData.expected_salary} onChange={handleNumericChange} required placeholder="Ksh 15,000" />
+                <FormInput label="Location*" icon={MapPin} name="location" type="text" value={formData.location} onChange={handleChange} required placeholder="City, Suburb" />
+                
+                <div className="flex flex-col space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Experience Level*</label>
+                  <select name="experience" value={formData.experience} onChange={handleChange} required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#f3a82f]/20 outline-none cursor-pointer">
+                    <option value="">Select Experience</option>
+                    <option value="none">None</option>
+                    <option value="few months">Less than a year</option>
+                    <option value="1-3">1-3 years</option>
+                    <option value="5+">5+ years</option>
+                  </select>
+                </div>
 
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">Email Address*</label>
-              <input name="email" type="email" value={formData.email} onChange={handleChange} required className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" />
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                   <FormInput label="Age*" icon={User} name="age" type="text" inputMode="numeric" value={formData.age} onChange={handleNumericChange} required />
+                   <div className="flex flex-col space-y-1.5">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Gender*</label>
+                    <select name="gender" value={formData.gender} onChange={handleChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#f3a82f]/20 outline-none cursor-pointer">
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">Password* (Min 4 chars)</label>
-              <input name="password" type="password" value={formData.password} onChange={handleChange} required className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" />
-            </div>
+            <section className="bg-slate-50 -mx-8 px-8 py-8 border-y border-slate-100">
+              <div className="flex items-center gap-2 mb-6 text-slate-800">
+                <div className="p-2 bg-blue-100 rounded-lg text-blue-600"><IdCard size={20}/></div>
+                <h3 className="text-lg font-bold">Verification Documents</h3>
+              </div>
+              
+              <div className="mb-6 max-w-sm">
+                <FormInput label="ID Number*" icon={IdCard} name="id_number" type="text" value={formData.id_number} onChange={handleNumericChange} required />
+              </div>
 
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">Confirm Password*</label>
-              <input name="confirm_password" type="password" value={formData.confirm_password} onChange={handleChange} required className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" />
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <ImageUpload label="ID Front" file={idFront} setFile={setIdFront} />
+                <ImageUpload label="ID Back" file={idBack} setFile={setIdBack} />
+                <ImageUpload label="Passport Image" file={passportImg} setFile={setPassportImg} />
+              </div>
+            </section>
 
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">Phone Number* (starts with 07)</label>
-              <input 
-                name="phone" 
-                type="text" 
-                inputMode="numeric"
-                placeholder="0712345678"
-                value={formData.phone} 
-                onChange={handleNumericChange} 
-                required 
-                className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" 
-              />
-            </div>
+            <section>
+              <div className="flex items-center gap-2 mb-6 text-slate-800">
+                <div className="p-2 bg-red-100 rounded-lg text-red-600"><ShieldAlert size={20}/></div>
+                <h3 className="text-lg font-bold">Emergency Contact</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <FormInput label="Kin Name" icon={User} name="kin_name" value={formData.kin_name} onChange={handleChange} required />
+                <FormInput label="Relationship" icon={Briefcase} name="kin_relationship" value={formData.kin_relationship} onChange={handleChange} required />
+                <FormInput label="Kin Phone" icon={Phone} name="kin_phone" value={formData.kin_phone} onChange={handleNumericChange} required />
+              </div>
+            </section>
 
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">Age*</label>
-              <input 
-                name="age" 
-                type="text" 
-                inputMode="numeric"
-                value={formData.age} 
-                onChange={handleNumericChange} 
-                required 
-                className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" 
-              />
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 py-4 bg-[#f3a82f] text-white font-bold rounded-2xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 disabled:opacity-70 group cursor-pointer"
+            >
+              {loading ? <Spin /> : (
+                <>
+                  Complete Registration
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
 
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">Gender*</label>
-              <select name="gender" value={formData.gender} onChange={handleChange} className="border border-gray-300 rounded-md px-4 py-2 outline-none">
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">General Location*</label>
-              <input name="location" type="text" value={formData.location} onChange={handleChange} required className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" placeholder="City, Suburb" />
-            </div>
+          <div className="bg-slate-50 p-6 text-center border-t border-slate-100">
+            <p className="text-slate-500 font-medium">
+              Already have an account?{" "}
+              <button onClick={() => navigate("/login/worker")} className="text-[#f3a82f] font-bold hover:underline cursor-pointer">
+                Login here
+              </button>
+            </p>
           </div>
-
-          {/* SECTION 2: ID Verification */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <h3 className="col-span-full font-bold text-gray-700 border-b pb-2">Identity Verification</h3>
-            <div className="flex flex-col md:col-span-2">
-              <label className="text-sm font-medium text-gray-600">ID/Passport Number*</label>
-              <input 
-                name="id_number" 
-                type="text" 
-                value={formData.id_number}
-                onChange={handleNumericChange} 
-                minLength={6}
-                required 
-                className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" 
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">ID Photo (Front)*</label>
-              <input type="file" onChange={(e) => setIdFront(e.target.files?.[0] || null)} required className="border border-gray-300 rounded-md px-2 py-1" />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">ID Photo (Back)*</label>
-              <input type="file" onChange={(e) => setIdBack(e.target.files?.[0] || null)} required className="border border-gray-300 rounded-md px-2 py-1" />
-            </div>
-          </div>
-
-          {/* SECTION 3: Next of Kin */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <h3 className="col-span-full font-bold text-gray-700 border-b pb-2">Next of Kin (Emergency)*</h3>
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">Kin Name*</label>
-              <input name="kin_name" type="text" value={formData.kin_name} onChange={handleChange} required className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-600">Kin Relationship*</label>
-              <input name="kin_relationship" type="text" value={formData.kin_relationship} onChange={handleChange} required className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" />
-            </div>
-            <div className="flex flex-col md:col-span-2">
-              <label className="text-sm font-medium text-gray-600">Kin Phone Number* (starts with 07)</label>
-              <input 
-                name="kin_phone" 
-                type="text" 
-                inputMode="numeric"
-                value={formData.kin_phone}
-                onChange={handleNumericChange} 
-                required 
-                className="border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-[#f3a82f] outline-none" 
-              />
-            </div>
-          </div>
-
-          <button 
-            type="submit" 
-            className="w-full cursor-pointer py-4 bg-[#f3a82f] text-white font-bold rounded-xl hover:bg-orange-600 transition-colors shadow-lg mt-4"
-          >
-            Register as Worker
-          </button>
-        </form>
-        <div>
-          <p className="text-center text-sm text-gray-500 mb-4">
-            Already have an account? <a  onClick={ () => navigate('/login/worker') } className="text-blue-600 font-medium hover:underline">Login here</a>
-          </p>
-
         </div>
       </div>
     </div>
