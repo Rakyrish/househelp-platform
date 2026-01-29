@@ -1,198 +1,275 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Tag, Button, Spin, message, Tabs, Progress, Avatar } from 'antd';
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  UserOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  EnvironmentOutlined,
-  DollarOutlined,
-  SafetyCertificateOutlined,
-  HistoryOutlined,
-  BulbOutlined,
-} from '@ant-design/icons';
-import api from '../../api/axios';
+  Card, Tag, Row, Col, Avatar, Button, Spin, Progress, Alert, Tabs, Badge, Typography, Space,  Empty
+} from "antd";
+import {
+  CheckCircleFilled, ExclamationCircleFilled, 
+  UserOutlined, EnvironmentOutlined, EditOutlined,
+  DollarCircleOutlined, ToolOutlined, SafetyCertificateOutlined,
+  PhoneOutlined, LockOutlined
+} from "@ant-design/icons";
 
-const Worker: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+// --- CUSTOM IMPORTS ---
+import api from "../../api/axios"; 
+import { useAuth } from "../../context/AuthContext";
+import EditProfileDrawer from "./EditProfileDrawer";
+import AccountSettings from "./AccountSettings";
+import WorkerRequests from "./WorkerRequests";
+
+const { Title, Text } = Typography;
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
+const WorkerDashboard = () => {
+  const { token, logout } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [invites, setInvites] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetches profile data from your Django backend
-        const res = await api.get('/users/profile/');
-        setUser(res.data);
-      } catch (e: any) {
-        console.error("Profile Load Error:", e);
-        message.error(e.response?.data?.detail || 'Failed to load profile data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const getFullUrl = (path: string | null) => {
+    if (!path) return null;
+    return path.startsWith('http') ? path : `${API_BASE}${path}`;
+  };
+
+  const fetchInvites = useCallback(async () => {
+    try {
+      const res = await api.get('worker-requests/my_invites/');
+      setInvites(res.data);
+    } catch (err) {
+      console.error("Error fetching invites:", err);
+    }
   }, []);
 
-  if (loading) {
-    return (
-      <div className="h-screen flex justify-center items-center flex-col gap-4">
-        <Spin size="large" />
-        <p className="text-slate-500 animate-pulse">Loading your dashboard...</p>
-      </div>
-    );
-  }
+  const fetchProfile = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('worker/dashboard/profile_status/');
+      setProfile(res.data);
+      setError(null);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        // Interceptor handles the redirect, but we stop loading here
+        return;
+      }
+      setError(err.response?.status === 404 ? "Profile data missing." : "Network Error.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      fetchProfile();
+      fetchInvites();
+    }
+  }, [token, fetchProfile, fetchInvites]);
+
+  // Logic for profile completion score
+  const completionScore = useMemo(() => {
+    if (!profile) return 0;
+    let score = 0;
+    if (profile.passport_img) score += 25;
+    if (profile.id_photo_front && profile.id_photo_back) score += 25;
+    if (profile.kin_name && profile.kin_phone) score += 25;
+    if (profile.location && profile.expected_salary && profile.worker_type) score += 25;
+    return score;
+  }, [profile]);
+
+  if (loading) return (
+    <div className="min-h-screen flex flex-col justify-center items-center bg-[#f8fafc]">
+      <Spin size="large" />
+      <Text className="mt-4 text-slate-500 font-medium animate-pulse">Synchronizing your dashboard...</Text>
+    </div>
+  );
+
+  if (error) return <Alert message="Error" description={error} type="error" showIcon className="m-8" />;
+
+  const tabItems = [
+    {
+      key: '1',
+      label: 'Overview',
+      children: (
+        <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <Row gutter={[24, 24]}>
+            <Col xs={24} lg={16} className="space-y-6">
+              {profile.status === "rejected" ? (
+                <Alert
+                  message={<span className="font-bold text-red-800">Verification Rejected</span>}
+                  description={profile.rejection_feedback || "Please update your documents."}
+                  type="error"
+                  showIcon
+                  action={<Button size="small" danger onClick={() => setIsDrawerVisible(true)}>Fix Now</Button>}
+                  className="rounded-2xl shadow-sm border-none bg-red-50"
+                />
+              ) : !profile.is_verified && (
+                <Alert
+                  title="Verification Pending"
+                  description="Our team is currently reviewing your documents."
+                  type="info"
+                  showIcon
+                  className="rounded-2xl shadow-sm border-none bg-blue-50 text-blue-800"
+                />
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <QuickStat icon={<ToolOutlined className="text-blue-500" />} label="Job Role" value={profile.worker_type?.replace("_", " ") || "Not Set"} bgColor="bg-blue-50" />
+                <QuickStat icon={<DollarCircleOutlined className="text-emerald-500" />} label="Exp. Salary" value={`Ksh ${profile.expected_salary || "0"}`} bgColor="bg-emerald-50" />
+                <QuickStat icon={<EnvironmentOutlined className="text-orange-500" />} label="Location" value={profile.location || "Not Set"} bgColor="bg-orange-50" />
+              </div>
+
+              <Card 
+                className="rounded-3xl border-none shadow-sm"
+                title={<span className="font-bold text-slate-800">Professional Bio</span>}
+                extra={<Button type="link" icon={<EditOutlined />} onClick={() => setIsDrawerVisible(true)}>Edit</Button>}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <Text className="text-slate-500 text-sm leading-relaxed">Experience: {profile.experience || "No experience summary provided yet."} years</Text>
+                    <div className="flex gap-2">
+                      <Tag className="rounded-full px-4 border-none bg-blue-100 text-blue-600 font-bold">Open to Work</Tag>
+                    </div>
+                  </div>
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                    <Text className="text-slate-400 text-[10px] font-bold block mb-2 uppercase tracking-wider">Emergency Contact</Text>
+                    <Title level={5} className="!m-0 text-slate-700">{profile.kin_name || "---"}</Title>
+                    <Text className="text-slate-500 italic"><PhoneOutlined className="mr-1"/> {profile.kin_phone || "No phone added"}</Text>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+
+            <Col xs={24} lg={8}>
+              <Card className="rounded-3xl border-none shadow-sm text-center sticky top-6 bg-white">
+                <Progress 
+                  type="circle" 
+                  percent={completionScore} 
+                  strokeWidth={10}
+                  strokeColor={{ '0%': '#3b82f6', '100%': '#10b981' }} 
+                />
+                <Title level={4} className="!mt-4">Profile Strength</Title>
+                <Text className="text-slate-400 text-sm px-4 block">A complete profile increases your chances of getting hired.</Text>
+                
+                <div className="mt-8 text-left space-y-4 px-2">
+                  <StrengthItem label="Passport Photo" done={!!profile.passport_img} />
+                  <StrengthItem label="Identity Documents" done={!!profile.id_photo_front && !!profile.id_photo_back} />
+                  <StrengthItem label="Next of Kin Info" done={!!profile.kin_name} />
+                  <StrengthItem label="Work Preferences" done={!!profile.worker_type && !!profile.expected_salary} />
+                </div>
+
+                <Button 
+                  block type="primary" size="large" icon={<EditOutlined />}
+                  onClick={() => setIsDrawerVisible(true)}
+                  className="mt-8 h-12 rounded-xl bg-blue-600 font-bold shadow-lg shadow-blue-100"
+                >
+                  Complete Profile
+                </Button>
+              </Card>
+            </Col>
+          </Row>
+        </div>
+      )
+    },
+    {
+      key: '2',
+      label: (
+        <Badge count={invites.filter((i:any)=>i.status === 'pending').length} offset={[12, 0]}>
+          <span className="px-2">Job Invites</span>
+        </Badge>
+      ),
+      children: completionScore < 100 ? (
+        <div className="py-20 text-center bg-white rounded-3xl mt-6 shadow-sm border border-slate-100">
+          <Empty
+            image={<LockOutlined style={{ fontSize: 64, color: '#bfbfbf' }} />}
+            description={
+              <div className="space-y-2">
+                <Text strong className="text-lg block">Job Invites are Locked</Text>
+                <Text className="text-slate-400">Complete your profile to 100% and get verified to see invitations from employers.</Text>
+              </div>
+            }
+          >
+            <Button type="primary" onClick={() => setIsDrawerVisible(true)}>Finish Profile Now</Button>
+          </Empty>
+        </div>
+      ) : (
+        <WorkerRequests />
+      )
+    },
+    {
+      key: '3',
+      label: 'Security & Settings',
+      children: <AccountSettings />
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
+    <div className="min-h-screen bg-[#f1f5f9] p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        
-        {/* TOP BANNER */}
-        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-4">
-            <Avatar size={80} icon={<UserOutlined />} className="bg-orange-100 text-orange-600" />
+        <header className="mb-8 flex flex-col md:flex-row justify-between items-center bg-white p-8 rounded-[2.5rem] shadow-sm border border-white">
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              <Avatar size={96} src={getFullUrl(profile.passport_img)} icon={<UserOutlined />} className="border-4 border-slate-50 shadow-xl" />
+              {profile.is_verified && (
+                <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-1 rounded-full border-2 border-white flex items-center justify-center">
+                  <SafetyCertificateOutlined className="text-[12px]" />
+                </div>
+              )}
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Hello, {user?.full_name || 'Worker'}!</h1>
-              <p className="text-slate-500">Member since {new Date().getFullYear()}</p>
+              <Title level={2} className="!m-0 !font-black text-slate-800">Hi, {profile.first_name || 'Worker'}!</Title>
+            
             </div>
           </div>
-          <div className="text-center md:text-right">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Account Status</p>
-            {user?.is_verified ? (
-              <Tag color="success" className="rounded-full px-4 py-1 font-medium border-none shadow-sm">
-                <CheckCircleOutlined /> Fully Verified
-              </Tag>
-            ) : (
-              <Tag color="warning" className="rounded-full px-4 py-1 font-medium border-none shadow-sm">
-                <ClockCircleOutlined /> Pending Verification
-              </Tag>
-            )}
+          <div className="mt-4 md:mt-0 flex gap-3">
+             <Button onClick={() => logout()} className="rounded-xl border-slate-200">Logout</Button>
+             <Tag color={profile.is_verified ? "success" : "processing"} className="px-6 py-2 rounded-2xl font-black border-none text-[10px] tracking-widest uppercase flex items-center">
+                {profile.is_verified ? "Verified Professional" : "Verification Pending"}
+             </Tag>
           </div>
-        </div>
+        </header>
 
-        {/* ACTIONABLE NOTIFICATION BAR */}
-        {!user?.is_verified ? (
-          <div className="mb-8 bg-white border-l-4 border-orange-500 shadow-sm p-5 rounded-r-xl flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-orange-100 p-3 rounded-full shrink-0">
-                <SafetyCertificateOutlined className="text-orange-600 text-xl" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-800">Verification in Progress</h3>
-                <p className="text-sm text-slate-500">
-                  Our vetting team will call you at <span className="font-semibold text-slate-700">{user?.phone}</span> for a physical interview.
-                </p>
-              </div>
-            </div>
-            <Button type="primary" className="bg-orange-600 hover:bg-orange-700 border-none h-10 px-6 rounded-lg">
-              View Requirements
-            </Button>
-          </div>
-        ) : (
-          <div className="mb-8 bg-green-50 border-l-4 border-green-500 shadow-sm p-5 rounded-r-xl">
-            <div className="flex items-center gap-4">
-              <div className="bg-green-100 p-3 rounded-full shrink-0">
-                <CheckCircleOutlined className="text-green-600 text-xl" />
-              </div>
-              <div>
-                <h3 className="font-bold text-green-800">You are Battle-Ready!</h3>
-                <p className="text-sm text-green-700">Your profile is now visible to employers. Keep your phone nearby for job alerts.</p>
-              </div>
-            </div>
-          </div>
-        )}
+        <style>{`
+          .worker-tabs .ant-tabs-nav:before { border-bottom: none !important; }
+          .worker-tabs .ant-tabs-tab { border-radius: 12px !important; margin-right: 8px !important; transition: all 0.2s; }
+          .worker-tabs .ant-tabs-tab-active { background: #3b82f6 !important; }
+          .worker-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: white !important; }
+          .worker-tabs .ant-tabs-ink-bar { display: none !important; }
+        `}</style>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* LEFT COLUMN */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card title="Profile Completion" className="shadow-sm rounded-xl border-none">
-              <Progress 
-                percent={user?.is_verified ? 100 : 65} 
-                strokeColor={user?.is_verified ? "#52c41a" : "#f3a82f"} 
-                status="active" 
-              />
-              <p className="text-xs text-gray-500 mt-4 italic">
-                <BulbOutlined className="text-orange-400" /> Tip: Workers with complete profiles get hired 3x faster.
-              </p>
-            </Card>
-
-            <Card title="Quick Stats" className="shadow-sm rounded-xl border-none">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 flex items-center gap-2"><DollarOutlined /> Total Earned</span>
-                  <span className="font-bold text-green-600 text-lg">KES 0.00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 flex items-center gap-2"><HistoryOutlined /> Jobs Done</span>
-                  <span className="font-bold text-slate-700 text-lg">0</span>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="lg:col-span-2">
-            <Card className="shadow-sm rounded-xl border-none">
-              <Tabs 
-                defaultActiveKey="1" 
-                className="custom-tabs"
-                items={[
-                  {
-                    key: '1',
-                    label: 'Overview',
-                    children: (
-                      <div className="space-y-6 pt-2">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50">
-                            <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Location</p>
-                            <p className="font-medium text-slate-700 flex items-center gap-2">
-                              <EnvironmentOutlined className="text-orange-500" /> {user?.location || 'Not Set'}
-                            </p>
-                          </div>
-                          <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50">
-                            <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Service Category</p>
-                            <p className="font-medium text-slate-700 capitalize">
-                                {user?.worker_type?.replace('_', ' ') || 'General Help'}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {!user?.is_verified && (
-                          <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex gap-3">
-                            <BulbOutlined className="text-blue-500 text-lg mt-1" />
-                            <div>
-                                <h4 className="text-blue-800 font-bold mb-1">Physical Vetting</h4>
-                                <p className="text-blue-700 text-sm leading-relaxed">
-                                  Our team needs to verify your identity. Visit us at the {user?.location || 'Main'} Office 
-                                  Monday to Friday (8 AM - 4 PM).
-                                </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ),
-                  },
-                  {
-                    key: '2',
-                    label: 'Next of Kin',
-                    children: (
-                      <div className="pt-2">
-                         <div className="bg-slate-50 p-5 rounded-xl border border-dashed border-slate-200">
-                            <p className="text-xs text-slate-400 font-bold uppercase mb-2">Primary Contact</p>
-                            <p className="font-bold text-slate-700 text-lg mb-1">{user?.kin_name || 'N/A'}</p>
-                            <p className="text-slate-500 flex items-center gap-2 uppercase text-xs">
-                              {user?.kin_relationship} • {user?.kin_phone}
-                            </p>
-                         </div>
-                      </div>
-                    ),
-                  },
-                ]} 
-              />
-            </Card>
-          </div>
-        </div>
+        <Tabs items={tabItems} size="large" className="worker-tabs" />
       </div>
+
+      <EditProfileDrawer
+        visible={isDrawerVisible}
+        onClose={() => setIsDrawerVisible(false)}
+        initialData={profile}
+        onUpdate={() => {
+          fetchProfile();
+          fetchInvites();
+        }}
+      />
     </div>
   );
 };
 
-export default Worker;
+// Sub-components for cleaner code
+const StrengthItem = ({ label, done }: { label: string, done: boolean }) => (
+  <div className="flex justify-between items-center bg-slate-50 p-2 rounded-lg">
+    <span className={`text-[13px] ${done ? 'text-slate-700' : 'text-slate-300'}`}>{label}</span>
+    {done ? <CheckCircleFilled className="text-emerald-500" /> : <ExclamationCircleFilled className="text-amber-400" />}
+  </div>
+);
+
+const QuickStat = ({ icon, label, value, bgColor }: any) => (
+  <Card className="rounded-2xl border-none shadow-sm transition-all hover:shadow-md">
+    <Space align="center">
+      <div className={`p-3 ${bgColor} rounded-xl`}>{icon}</div>
+      <div>
+        <Text className="text-[10px] text-slate-400 font-bold uppercase block">{label}</Text>
+        <Text strong className="capitalize text-slate-700">{value}</Text>
+      </div>
+    </Space>
+  </Card>
+);
+
+export default WorkerDashboard;

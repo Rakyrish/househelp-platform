@@ -1,8 +1,9 @@
 from rest_framework import serializers
 # from django.contrib.auth import get_user_model
-from .models import User
+from .models import User, Booking, Category,PlatformSetting
 from django.contrib.auth import authenticate
 from rest_framework import serializers
+from django.utils.text import slugify
 
 # User = get_user_model()
 
@@ -10,17 +11,15 @@ class RegisterWorkerSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     full_name = serializers.CharField(write_only=True)
 
-
     class Meta:
         model = User
         fields = [
             'full_name', 'password', 'email', 'phone', 'location', 'age',
-            'id_number', 'id_photo_front', 'id_photo_back', 
-            'kin_name', 'kin_phone', 'kin_relationship', 'gender'
+            'id_number', 'id_photo_front', 'id_photo_back', 'passport_img', 
+            'kin_name', 'kin_phone', 'kin_relationship', 'gender', 'experience', 'expected_salary'
         ]
 
     def create(self, validated_data):
-        # 1. Extract name and email
         full_name = validated_data.pop('full_name', '')
         email = validated_data.get('email')
         
@@ -28,9 +27,8 @@ class RegisterWorkerSerializer(serializers.ModelSerializer):
         first_name = name_parts[0]
         last_name = name_parts[1] if len(name_parts) > 1 else ''
 
-        # 2. Use email as the username to satisfy Django's requirement
         user = User.objects.create_user(
-            username=email,  # <--- Added this line
+            username=email,
             first_name=first_name,
             last_name=last_name,
             role='worker',
@@ -47,7 +45,7 @@ class RegisterEmployerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['full_name', 'password', 'email', 'phone', 'location', 'family_size', 'worker_type']
+        fields = ['full_name', 'password', 'email', 'phone', 'location', 'family_size', 'worker_type', 'salary', 'requirements', 'start_date', 'accommodation', 'id_number' ]
 
     def create(self, validated_data):
         full_name = validated_data.pop('full_name', '')
@@ -147,8 +145,89 @@ class AdminUserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 'phone', 
-            'role', 'status', 'is_verified', 'id_number', 
-            'id_photo_front', 'id_photo_back', 'location', 
-            'kin_name', 'kin_phone', 'worker_type', 'date_joined'
+            'role', 'status', 'is_verified', 'id_number', 'family_size', 'salary', 'start_date',
+            'id_photo_front', 'id_photo_back', 'location', 'age',
+            'kin_name', 'kin_phone', 'worker_type', 'date_joined', 'passport_img', 'expected_salary', 'salary', 'requirements', 'accommodation'
+        ]
+class BookingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = ['id', 'employer', 'worker', 'status', 'created_at']
+        read_only_fields = ['employer', 'status']
+        
+class WorkerSerializer(serializers.ModelSerializer):
+    my_request_status = serializers.SerializerMethodField()
+    passport_img = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'first_name', 'last_name', 'worker_type', 'location', 
+            'experience', 'expected_salary', 'passport_img', 'is_verified', 
+            'status', 'my_request_status', 'phone', 'age', 'is_available', 'current_employer',  'start_date','requirements'
+        ]
+
+    def get_my_request_status(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            # Check for any booking between this employer and this worker
+            booking = Booking.objects.filter(employer=request.user, worker=obj).first()
+            if booking:
+                return booking.status
+        return None
+
+    def get_passport_img(self, obj):
+        if obj.passport_img:
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.passport_img.url)
+        return None
+    
+class CategorySerializer(serializers.ModelSerializer):
+    # This will pick up the 'worker_count' we manually set in get_queryset
+    worker_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'icon_emoji', 'description', 'is_active', 'worker_count']
+        read_only_fields = ['slug']
+
+    def create(self, validated_data):
+        # Auto-generate slug from name if not provided
+        if 'slug' not in validated_data:
+            validated_data['slug'] = slugify(validated_data['name'])
+        return super().create(validated_data)
+
+class PlatformSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlatformSetting
+        # These fields MUST match the "name" props in your Ant Design Form
+        fields = [
+            'maintenance_mode', 
+            'broadcast_message', 
+            'allow_new_registrations', 
+            'support_email', 
+            'platform_fee_info'
+        ]
+
+    def validate_support_email(self, value):
+        """Custom validation to ensure the support email is valid."""
+        if not value.endswith('@kykam.com') and not value.endswith('.com'):
+            raise serializers.ValidationError("Please provide a valid professional email address.")
+        return value
+
+# Extension: Update your existing AdminUserDetailSerializer 
+# to ensure it returns the display name of the worker_type
+class AdminUserDetailSerializer(serializers.ModelSerializer):
+    worker_type_display = serializers.CharField(source='get_worker_type_display', read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 'phone', 
+            'role', 'status', 'is_verified', 'id_number', 'family_size', 
+            'id_photo_front', 'id_photo_back', 'location', 'age',
+            'kin_name', 'kin_phone', 'worker_type', 'worker_type_display', 
+            'date_joined', 'passport_img', 'expected_salary', 'salary', 
+            'requirements', 'accommodation'
         ]
 

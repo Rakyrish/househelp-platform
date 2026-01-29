@@ -1,57 +1,43 @@
-version: '3.9'
 
 services:
-  # frontend:
-  #   image: ${FRONTEND}
-  #   restart: always
-  #   environment:
-  #     - API_URL=${API_URL}
-  #     - NODE_ENV=${NODE_ENV}
-  #   build: 
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: frontend_c
-  #   ports:
-  #     - '5000:5000'
-  #   networks:
-  #     - mynetwork
-
   backend:
-    image: ${BACKEND}
     restart: always
     user: root
+    env_file: .env
+  
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - DBNAME=${DBNAME}
       - DBUSER=${DBUSER}
       - DBPORT=${DBPORT}
-      - DBHOST=db
+      - DBHOST=${DBHOST}
       - DBPASSWORD=${DBPASSWORD}
+      - EMAIL_USER=${EMAIL_USER}       
     build: 
       context: ./backend
       dockerfile: Dockerfile
-    # --- CHANGE 1: Update path to point to the module inside the backend folder ---
     command: daphne -v 0 -b 0.0.0.0 -p 8000 kykam_agencies.asgi:application
-    # --- CHANGE 2: Update volumes to map specifically to the backend folder ---
     volumes:
-      - ./backend:/app           # Map the 'backend' folder contents to '/app'
-      - ./media:/app/media       # Keep your media mapping
+      - ./backend:/app
+      - ./media:/app/media
       - static_volume:/app/staticfiles/
-    working_dir: /app            # Ensure Docker executes from /app
+    working_dir: /app
     container_name: backend
     ports:
       - '8000:8000'
     depends_on:
       - db
       - redis
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     networks:
-      - mynetwork
+      - kykam_network
 
   db:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: postgres:15-alpine  # Use a standard image instead of 'build'
     container_name: db
+    restart: always
     ports:
       - '5434:5432'
     volumes:
@@ -60,10 +46,8 @@ services:
       POSTGRES_DB: ${DBNAME}
       POSTGRES_USER: ${DBUSER}
       POSTGRES_PASSWORD: ${DBPASSWORD}
-      DBHOST: ${DBHOST}
-      DBPORT: ${DBPORT}
     networks:
-      - mynetwork
+      - kykam_network
 
   redis:
     image: redis:alpine
@@ -71,24 +55,10 @@ services:
     expose:
       - 6379
     networks:
-      - mynetwork
-
-  # nginx:
-  #   image: ${NGINX}
-  #   restart: always
-  #   build:
-  #     context: ./nginx
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - 80:80
-  #   volumes:
-  #     - static_volume:/app/staticfiles/
-  #     - media_volume:/app/mediafiles/
-  #   networks:
-  #     - mynetwork
+      - kykam_network  # Changed from mynetwork
 
 networks:
-  mynetwork:
+  kykam_network:
     driver: bridge
 
 volumes:

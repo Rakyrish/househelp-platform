@@ -2,14 +2,9 @@ import React from 'react';
 import About from './about';
 import Why from './why';
 import Services from './services';
+import HowItWorks from './HowItWorks';
 
 const Home = () => {
-  // Styles
-  const sectionStyle = {
-    padding: "80px 20px",
-    fontFamily: "Arial, sans-serif",
-    textAlign: "center",
-  } as React.CSSProperties;
 
   const primaryButtonStyle = {
     backgroundColor: "#f3a82f",
@@ -101,33 +96,7 @@ const Home = () => {
 
       <Services />
 
-       {/* 4. HOW IT WORKS */}
-      <section style={{ ...sectionStyle, backgroundColor: "#fdf3e7", }}>
-        <h2 style={{ fontSize: "32px", color: "#333", marginBottom: "40px" }}>Getting Started is Easy</h2>
-        <div style={{ maxWidth: "900px", margin: "0 auto", textAlign: "left" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
-            <div style={{ minWidth: "50px", height: "50px", backgroundColor: "#f3a82f", color: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginRight: "20px", fontWeight: "bold", fontSize: "20px" }}>1</div>
-            <div>
-                <h4 style={{ margin: "0", fontSize: "20px" }}>Register Your Account</h4>
-                <p style={{ margin: "5px 0 0", color: "#666" }}>Sign up as an employer seeking help or a worker seeking a job.</p>
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
-            <div style={{ minWidth: "50px", height: "50px", backgroundColor: "#f3a82f", color: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginRight: "20px", fontWeight: "bold", fontSize: "20px" }}>2</div>
-            <div>
-                <h4 style={{ margin: "0", fontSize: "20px" }}>Submit Verification</h4>
-                <p style={{ margin: "5px 0 0", color: "#666" }}>Workers upload their IDs for our team to verify traceability and conduct.</p>
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: "30px" }}>
-            <div style={{ minWidth: "50px", height: "50px", backgroundColor: "#f3a82f", color: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginRight: "20px", fontWeight: "bold", fontSize: "20px" }}>3</div>
-            <div>
-                <h4 style={{ margin: "0", fontSize: "20px" }}>Secure Placement</h4>
-                <p style={{ margin: "5px 0 0", color: "#666" }}>Connect directly through the platform and start a professional relationship.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+       <HowItWorks/>
 
       {/* 3. ABOUT US SECTION */}
       <About />
