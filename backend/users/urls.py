@@ -48,7 +48,7 @@ urlpatterns = [
     path('login/worker/', WorkerLoginView.as_view(), name='login-worker'),
     path('login/employer/', EmployerLoginView.as_view(), name='login-employer'),
     path('login/admin/', AdminLoginView.as_view(), name='login-admin'),
-    path('admin/platform-settings/', views.PlatformSettingsView.as_view(), name='admin-platform'),
+    path('admin-panel/platform-settings/', views.PlatformSettingsView.as_view(), name='admin-platform'),
     path('password-reset-request/', views.PasswordResetRequestView.as_view()),
     path('password-reset-confirm/<str:uidb64>/<str:token>/', views.PasswordResetConfirmView.as_view()),
     path("int:user_id>/soft-delete/", views.SoftDeleteUserView.as_view()),

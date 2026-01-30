@@ -28,7 +28,7 @@ interface DashboardStats {
   active_hires: number; // New metric
 }
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -47,7 +47,7 @@ const Dashboard = () => {
       headers: { Authorization: `Token ${token}` },
     };
   setLoading(true);
-  const res = await axios.get('/api/admin/manage-hires/', config);
+  const res = await axios.get(`'${API}/api/admin/manage-hires/'`, config);
   setHires(res.data);
   setLoading(false);
 };

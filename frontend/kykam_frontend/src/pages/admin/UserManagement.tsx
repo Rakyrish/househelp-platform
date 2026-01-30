@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import UserTable from '../../components/admin/UserTable';
-
+const API = import.meta.env.VITE_API_BASE_URL;
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +11,7 @@ const UserManagement = () => {
       try {
         // Replace with your login token logic
         const token = localStorage.getItem('token'); 
-        const response = await axios.get('http://localhost:8000/api/admin/manage-users/', {
+        const response = await axios.get(`${API}/api/admin/manage-users/`, {
           headers: { Authorization: `Token ${token}` }
         });
         setUsers(response.data);
