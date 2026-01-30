@@ -32,7 +32,7 @@ import ForgotPassword from "./auth/ForgotPassword";
 import ResetPasswordConfirm from "./auth/ResetPasswordConfirm";
 import axios from "axios";
 import ContactUs from "./layout/ContactUs";
-
+const API = import.meta.env.VITE_API_BASE_URL;
 function App() {
   const [maintenance, setMaintenance] = useState({ active: false, msg: "" });
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ function App() {
     const checkStatus = async () => {
       try {
         // Step 1: Public check of the platform status
-        const { data } = await axios.get("/api/admin/platform-settings/");
+        const { data } = await axios.get(`${API}/api/admin-panel/platform-settings/`);
 
         // Step 2: Check localStorage for Admin status
         const userStr = localStorage.getItem("user"); // "{"name":" ","role":"admin"}"

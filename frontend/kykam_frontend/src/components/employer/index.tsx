@@ -14,7 +14,7 @@ import AccountSettings from "./AccountSettings";
 
 const { Content } = Layout;
 const { Option } = Select;
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const EmployerDashboard = () => {
   const [workers, setWorkers] = useState([]);
@@ -120,6 +120,7 @@ const EmployerDashboard = () => {
 
           {loading ? (
             <div className="text-center py-20 text-slate-400 italic">Updating listings...</div>
+            
           ) : (
             <Row gutter={[24, 24]}>
               {workers.map((worker: any) => (

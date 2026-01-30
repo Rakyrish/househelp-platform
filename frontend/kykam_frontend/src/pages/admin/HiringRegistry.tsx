@@ -20,6 +20,8 @@ interface HireRecord {
   worker_type: string;
 }
 
+const API = import.meta.env.VITE_API_BASE_URL;
+
 const HiringRegistry = ({ hires = [], loading, refreshData }: { 
   hires: HireRecord[], 
   loading: boolean,
@@ -51,12 +53,12 @@ const handleAdminAction = async (id: number, action: 'approve' | 'withdraw' | 'c
 
     try {
       if (action === 'withdraw') {
-        await axios.delete(`/api/admin/manage-hires/${id}/withdraw_request/`, config);
+        await axios.delete(`${API}/api/admin/manage-hires/${id}/withdraw_request/`, config);
         message.success("Engagement removed from registry.");
       } else {
         const statusMap = { approve: 'accepted', complete: 'completed' };
         await axios.post(
-          `/api/admin/manage-hires/${id}/force_action/`, 
+          `${API}/api/admin/manage-hires/${id}/force_action/`, 
           { status: statusMap[action] }, 
           config
         );
