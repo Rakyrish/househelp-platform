@@ -186,6 +186,7 @@ class AdminUserPasswordResetView(APIView):
     # Ensure both token and session (for browser tests) are allowed
     authentication_classes = [TokenAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated]
+ 
 
     def post(self, request, user_id):
         # 1. Security Check

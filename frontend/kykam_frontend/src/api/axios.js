@@ -8,17 +8,18 @@ const api = axios.create({
 });
 
 api.interceptors.response.use(
-    (response) => response, // If request is successful, do nothing
+    (response) => response,
     (error) => {
+        const isLoginRequest = error.config.url.includes('/login/');
+
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-            console.warn("Token expired or unauthorized. Logging out...");
-            
-            // 1. Clear Local Storage
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            
-            // 2. Redirect to login page
-            window.location.href = '/login'; 
+            // ONLY redirect if it's NOT a login attempt
+            if (!isLoginRequest) {
+                console.warn("Token expired. Logging out...");
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/'; 
+            }
         }
         return Promise.reject(error);
     }
