@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 
+const API = import.meta.env.VITE_API_BASE_URL;
 const PlatformSettings = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -17,7 +18,7 @@ const PlatformSettings = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const { data } = await axios.get('/api/admin/platform-settings/');
+        const { data } = await axios.get(`${API}/api/admin-panel/platform-settings/`);
         form.setFieldsValue(data);
       } catch (err) {
         message.error("Could not load current system status.");
@@ -33,7 +34,7 @@ const PlatformSettings = () => {
     try {
       const token = localStorage.getItem('token');
       // Use relative path to leverage Vite Proxy
-      await axios.post('/api/admin/platform-settings/', values, {
+      await axios.post(`${API}/api/admin-panel/platform-settings/`, values, {
         headers: { Authorization: `Token ${token}` }
       });
       message.success("Platform configuration deployed live!");
@@ -49,7 +50,7 @@ const PlatformSettings = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-700">
       <Alert
-        message={<span className="font-bold text-amber-500">Live Production Control</span>}
+        message={<span className="font-bold text-amber-500">Live Production Control..</span>}
         description="Changes made here affect all users in real-time. Toggling Maintenance Mode will redirect all non-admin users to the evolution screen."
         type="warning"
         showIcon
