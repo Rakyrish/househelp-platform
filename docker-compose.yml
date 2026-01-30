@@ -1,45 +1,11 @@
 version: "3.9"
 
 services:
-  backend:
-    restart: always
-    user: root
-    env_file: .env
-    environment:
-      - SECRET_KEY=${SECRET_KEY}
-      - DBNAME=${DBNAME}
-      - DBUSER=${DBUSER}
-      - DBPORT=${DBPORT}
-      - DBHOST=${DBHOST}
-      - DBPASSWORD=${DBPASSWORD}
-      - EMAIL_USER=${EMAIL_USER}       
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile
-    command: daphne -v 0 -b 0.0.0.0 -p 8000 kykam_agencies.asgi:application
-    volumes:
-      - ./backend:/app
-      - ./media:/app/media
-      - static_volume:/app/staticfiles/
-    working_dir: /app
-    container_name: backend
-    ports:
-      - '8000:8000'
-    depends_on:
-      - db
-      - redis
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    networks:
-      - kykam_network
-
+  # --- DATABASE ---
   db:
     image: postgres:15-alpine
-    container_name: db
+    container_name: kykam_db
     restart: always
-    ports:
-      - '5434:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     environment:
@@ -49,51 +15,63 @@ services:
     networks:
       - kykam_network
 
+  # --- CACHE ---
   redis:
     image: redis:alpine
+    container_name: kykam_redis
     restart: always
-    expose:
-      - 6379
     networks:
       - kykam_network
 
-  frontend:
-    build:
-      context: ./frontend/kykam_frontend
+  # --- DJANGO BACKEND ---
+  backend:
+    build: 
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: frontend
+    container_name: kykam_backend
     restart: always
-    
+    env_file: .env
+    # Daphne handles ASGI for real-time features
+    command: daphne -b 0.0.0.0 -p 8000 kykam_agencies.asgi:application
+    volumes:
+      - static_volume:/app/staticfiles
+      - ./media:/app/media
+    expose:
+      - "8000"
+    depends_on:
+      - db
+      - redis
     networks:
       - kykam_network
-    depends_on:
-      - backend
-    
 
+  # --- NGINX (GATEKEEPER) ---
   nginx:
     image: nginx:alpine
-    container_name: nginx
+    container_name: kykam_nginx
     restart: always
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - static_volume:/app/staticfiles
-      - ./media:/app/media
-      - ./frontend/kykam_frontend/dist:/usr/share/nginx/html
+      # Nginx config
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # Static & Media
+      - static_volume:/app/staticfiles:ro
+      - ./media:/app/media:ro
+      # Frontend Build (Ensure your build script outputs to this folder)
+      - ./frontend/kykam_frontend/dist:/usr/share/nginx/html:ro
+      # SSL Certificates (Certbot)
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - backend
-      - frontend
     networks:
       - kykam_network
-
 
 networks:
   kykam_network:
     driver: bridge
 
 volumes:
-  pgdata: {}
-  static_volume: {}
-  media_volume: {}
+  pgdata:
+  static_volume:

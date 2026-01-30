@@ -5,20 +5,20 @@ from datetime import timedelta
 
 load_dotenv()
 
-# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
-DEBUG = True
-import os
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'host.docker.internal', '*']
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
-# OR
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+
+ALLOWED_HOSTS = [
+    'kykamagencies.co.ke',
+    'www.kykamagencies.co.ke',
+    'api.kykamagencies.co.ke',
+    'localhost',
+    '127.0.0.1',
+    'host.docker.internal'
 ]
 
 # Application definition
@@ -30,23 +30,25 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # Third-party apps
+    # Third-party
     'rest_framework',
-    'rest_framework.authtoken', # Added for Token generation
+    'rest_framework.authtoken',
     'corsheaders',
+    'whitenoise.runserver_nostatic', # For serving static files in production
     
     # Your apps
     'users',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # 1. ALWAYS FIRST
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Critical for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',  # 2. MUST BE AFTER CORS
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'users.middleware.MaintenanceMiddleware', # 3. Custom logic should be lower
+    'users.middleware.MaintenanceMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -82,63 +84,57 @@ DATABASES = {
     }
 }
 
-# --- NEW: CUSTOM AUTHENTICATION ---
-# This allows Django to use your phone-based login logic
+# Auth Logic
 AUTH_USER_MODEL = 'users.User'
-
 AUTHENTICATION_BACKENDS = [
-    'users.backends.PhoneAuthBackend', # Points to your custom phone logic
-    'django.contrib.auth.backends.ModelBackend', # Fallback
+    'users.backends.PhoneAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
-# --- NEW: REST FRAMEWORK SETTINGS ---
-# This ensures DRF knows how to authenticate and find its CSS
+# REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'users.authentication.ExpiringTokenAuthentication', # Changed this
+        'users.authentication.ExpiringTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated', # Recommendation: Secure by default
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
 }
 
-# Static files
+# Static & Media Files
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Security & CORS
+CORS_ALLOWED_ORIGINS = [
+    os.getenv("FRONTEND_URL", "https://kykamagencies.co.ke"),
+    "https://kykamagencies.co.ke",
+    "https://www.kykamagencies.co.ke",
 ]
 
-# Media files - User uploads
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media' # Using the / operator is cleaner with Path objects
+CSRF_TRUSTED_ORIGINS = [
+    "https://kykamagencies.co.ke",
+    "https://api.kykamagencies.co.ke" 
+]
 
-# CORS settings
-CORS_ALLOW_ALL_ORIGINS = True
+# Production Security Headers
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# Allows your React app to display media/site content in iframes
-X_FRAME_OPTIONS = 'SAMEORIGIN'
-
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True, 
-}
-
-TOKEN_EXPIRED_AFTER_SECONDS = 3600  # Token expires in 5 minutes
-
-# --- SENDGRID CONFIGURATION ---
+# SendGrid
 EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-
-# This is the email you verified in your SendGrid dashboard
 DEFAULT_FROM_EMAIL = os.getenv("EMAIL_USER") 
 
-# Toggle this for debugging
-SENDGRID_SANDBOX_MODE_IN_DEBUG = False
-
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
