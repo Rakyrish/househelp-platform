@@ -215,6 +215,7 @@ class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
             msg.attach_alternative(html_content, "text/html")
             msg.send(fail_silently=False)
             print(f"--- SUCCESS: Hire request email sent to {to} via SendGrid ---")
+            print(f"email sending is {from_email}")
         except Exception as e:
             # We log the error but don't break the response for the user
             print(f"--- SENDGRID ERROR: {str(e)} ---")

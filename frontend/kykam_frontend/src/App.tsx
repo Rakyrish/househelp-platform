@@ -69,7 +69,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter  >
       <AuthProvider>
         <Routes>
           {/* 1. ADMIN LOGIN (No Layout) */}
@@ -96,7 +96,7 @@ function App() {
             element={
               <>
                 <Header />
-                <main className="min-h-screen">
+                <main className="page-container min-h-screen">
                   <Routes>
                     {/* Public Pages */}
                     <Route path="/" element={<Home />} />

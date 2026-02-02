@@ -24,8 +24,9 @@ const Header = () => {
 
   const PRIMARY_COLOR = "#f3a82f";
   const DARK_BG = "#1e293b";
-  const loginRef = useRef(null);
-  const registerRef = useRef(null);
+ 
+  const loginRef = useRef<HTMLDivElement>(null);
+  const registerRef = useRef<HTMLDivElement>(null);
 
   const notificationContent = (
     <List
@@ -48,15 +49,17 @@ const Header = () => {
   );
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      // Define the type inside the angle brackets < >
-      const loginRef = useRef<HTMLDivElement>(null);
-      const registerRef = useRef<HTMLDivElement>(null);
-      if (loginRef.current && !loginRef.current.contains(event.target))
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (loginRef.current && !loginRef.current.contains(target)) {
         setOpenLogin(false);
-      if (registerRef.current && !registerRef.current.contains(event.target))
+      }
+      if (registerRef.current && !registerRef.current.contains(target)) {
         setOpenRegister(false);
+      }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -79,7 +82,7 @@ const Header = () => {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full px-4 md:px-10 h-[70px] flex items-center justify-between shadow-xl"
+      className="sticky top-0 z-50 mb-0.5 w-full px-4 md:px-10 h-[70px] flex items-center justify-between shadow-xl"
       style={{
         backgroundColor: DARK_BG,
         borderBottom: `3px solid ${PRIMARY_COLOR}`,
