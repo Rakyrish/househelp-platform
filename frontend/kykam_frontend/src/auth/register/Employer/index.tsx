@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { message, Spin } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext'; // 1. Import useAuth
 import { 
   User, Mail, Lock, Phone, MapPin, Users, 
   Banknote, Home, Calendar, ClipboardList, ArrowRight, IdCard
 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-
-// --- HELPER COMPONENTS (OUTSIDE TO PREVENT INPUT FOCUS LOSS) ---
+// --- HELPER COMPONENTS (STAY THE SAME) ---
 
 const FormInput = ({ label, icon: Icon, ...props }: any) => (
   <div className="flex flex-col space-y-1.5">
@@ -31,6 +29,7 @@ const FormInput = ({ label, icon: Icon, ...props }: any) => (
 // --- MAIN COMPONENT ---
 
 const RegisterEmployer = () => {
+  const { register } = useAuth(); // 2. Hook into AuthContext
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   
@@ -44,16 +43,15 @@ const RegisterEmployer = () => {
     family_size: '',
     worker_type: 'general_househelp',
     salary: '',
-    accommodation: 'live_out', // New field
-    start_date: '',           // New field
+    accommodation: 'live_out',
+    start_date: '',
     requirements: '' ,
-    id_number: '',        // New field
+    id_number: '',
   });
 
   const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const onlyNums = value.replace(/\D/g, ''); 
-    setFormData((prev) => ({ ...prev, [name]: onlyNums }));
+    setFormData((prev) => ({ ...prev, [name]: value.replace(/\D/g, '') }));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -63,22 +61,25 @@ const RegisterEmployer = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validations
     if (formData.password.length < 4) return message.error("Password too short.");
     if (formData.password !== formData.confirm_password) return message.error("Passwords do not match!");
     
     const phoneRegex = /^07\d{8}$|^01\d{8}$/;
-    if (!phoneRegex.test(formData.phone)) return message.error("Invalid phone format.");
+    if (!phoneRegex.test(formData.phone)) return message.error("Invalid phone format (07... or 01...)");
 
     setLoading(true);
+
+    // 3. Destructure confirm_password to avoid sending it to the backend
     const { confirm_password, ...payload } = formData;
 
     try {
-      await axios.post(`${API}/api/register/employer/`, payload);
-      message.success('Registration Successful!');
-      navigate('/login/employer');
+      // 4. Call centralized register function
+      await register({ type: 'employer', payload });
+      // Navigation is handled inside AuthContext's register function
     } catch (error: any) {
-      const errorMsg = error.response?.data?.email?.[0] || 'Registration failed.';
-      message.error(errorMsg);
+      // Error messages are already handled by the message.error in AuthContext
+      console.error("Registration failed", error);
     } finally {
       setLoading(false);
     }
@@ -119,6 +120,7 @@ const RegisterEmployer = () => {
                 <FormInput label="Confirm Password*" icon={Lock} name="confirm_password" type="password" value={formData.confirm_password} onChange={handleChange} required />
               </div>
             </section>
+
             <div className="mb-6 max-w-sm">
                 <FormInput label="ID Number*" icon={IdCard} name="id_number" type="text" value={formData.id_number} onChange={handleNumericChange} required />
             </div>

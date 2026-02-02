@@ -1,4 +1,6 @@
+import { useNavigate } from "react-router-dom";
 export default function Services() {
+  const navigate = useNavigate()
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-slate-100 py-24 px-4">
       
@@ -73,14 +75,14 @@ export default function Services() {
         {/* CTA Section */}
         <div className="mt-20 flex flex-col items-center justify-center gap-6 sm:flex-row">
           <a
-            href="/register/employer"
+            onClick={() => navigate('/login/employer')}
             className="w-full sm:w-auto rounded-full bg-amber-500 px-10 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-amber-600 hover:shadow-xl text-center"
           >
             Hire a Professional
           </a>
 
           <a
-            href="/register/worker"
+            onClick={() => navigate('/login/worker')}
             className="w-full sm:w-auto flex items-center justify-center gap-3 rounded-full border-2 border-slate-200 bg-white px-10 py-4 text-lg font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
           >
             <svg

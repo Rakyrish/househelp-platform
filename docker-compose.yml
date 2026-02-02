@@ -36,8 +36,10 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - ./media:/app/media
-    expose:
-      - "8000"
+    # expose:
+    #   - "8000"
+    ports:
+      - "8000:8000"
     depends_on:
       - db
       - redis
@@ -53,21 +55,17 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # Nginx config
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      # Static & Media
       - static_volume:/app/staticfiles:ro
       - ./media:/app/media:ro
-      # Frontend Build (Ensure your build script outputs to this folder)
       - ./frontend/kykam_frontend/dist:/usr/share/nginx/html:ro
-      # SSL Certificates (Certbot)
+      # Fix: Only use the relative path for portability
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - backend
     networks:
       - kykam_network
-
 networks:
   kykam_network:
     driver: bridge

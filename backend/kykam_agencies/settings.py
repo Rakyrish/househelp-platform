@@ -10,17 +10,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+# DEBUG=True
 
-
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://kykamagencies.co.ke')
 ALLOWED_HOSTS = [
     'kykamagencies.co.ke',
     'www.kykamagencies.co.ke',
     'api.kykamagencies.co.ke',
     'localhost',
     '127.0.0.1',
-    'host.docker.internal'
+    'host.docker.internal',
+    "102.212.247.246",
+    'www.lucacare.co.ke', 'lucacare.co.ke',
 ]
-
+CORS_ALLOW_CREDENTIALS = True
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -29,13 +32,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Third-party
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
     'whitenoise.runserver_nostatic', # For serving static files in production
-    
+
     # Your apps
     'users',
 ]
@@ -48,10 +51,17 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'users.middleware.MaintenanceMiddleware',
+    # 'users.middleware.MaintenanceMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if not DEBUG:
+    MIDDLEWARE.insert(
+        MIDDLEWARE.index('django.contrib.auth.middleware.AuthenticationMiddleware') + 1,
+        'users.middleware.MaintenanceMiddleware',
+    )
+
 
 ROOT_URLCONF = 'kykam_agencies.urls'
 
@@ -105,7 +115,11 @@ REST_FRAMEWORK = {
 # Static & Media Files
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+if DEBUG:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -115,12 +129,26 @@ CORS_ALLOWED_ORIGINS = [
     os.getenv("FRONTEND_URL", "https://kykamagencies.co.ke"),
     "https://kykamagencies.co.ke",
     "https://www.kykamagencies.co.ke",
+    "https://102.212.247.246",
+    "http://102.212.247.246",
+    "http://www.lucacare.co.ke:8000",
+    "https://www.lucacare.co.ke",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://kykamagencies.co.ke",
-    "https://api.kykamagencies.co.ke" 
+    "https://www.kykamagencies.co.ke",
+    "https://api.kykamagencies.co.ke",
+    "https://102.212.247.246",
+    "http://102.212.247.246",
+    "http://www.lucacare.co.ke:8000",
+    "https://www.lucacare.co.ke",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
+
 
 # Production Security Headers
 if not DEBUG:
@@ -135,6 +163,5 @@ if not DEBUG:
 # SendGrid
 EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-DEFAULT_FROM_EMAIL = os.getenv("EMAIL_USER") 
-
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
