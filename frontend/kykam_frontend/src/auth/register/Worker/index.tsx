@@ -1,20 +1,16 @@
 import React, { useState } from "react";
 import { message, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext"; // Import the hook
 import { 
   User, Mail, Lock, Phone, MapPin, Briefcase, 
   IdCard, ShieldAlert, Upload, X, ArrowRight, DollarSign
 } from "lucide-react";
 
-const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-
-// --- HELPER COMPONENTS (DEFINED OUTSIDE TO PREVENT FOCUS LOSS) ---
-
+// --- HELPER COMPONENTS (STAY THE SAME) ---
 const FormInput = ({ label, icon: Icon, ...props }: any) => (
   <div className="flex flex-col space-y-1.5">
-    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
-      {label}
-    </label>
+    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">{label}</label>
     <div className="relative group">
       <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#f3a82f] transition-colors">
         <Icon size={18} />
@@ -45,12 +41,7 @@ const ImageUpload = ({ label, file, setFile }: any) => (
       <label className="cursor-pointer flex flex-col items-center py-6 w-full">
         <Upload className="text-slate-300 group-hover:text-[#f3a82f] mb-2" size={24} />
         <span className="text-xs text-slate-400 font-medium text-center">Tap to Upload</span>
-        <input 
-          type="file" 
-          accept="image/*" 
-          className="hidden" 
-          onChange={(e) => setFile(e.target.files?.[0] || null)} 
-        />
+        <input type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
       </label>
     )}
   </div>
@@ -59,7 +50,10 @@ const ImageUpload = ({ label, file, setFile }: any) => (
 // --- MAIN COMPONENT ---
 
 const RegisterWorker = () => {
+  const { register } = useAuth(); // Use the register function from context
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -80,12 +74,10 @@ const RegisterWorker = () => {
   const [idFront, setIdFront] = useState<File | null>(null);
   const [idBack, setIdBack] = useState<File | null>(null);
   const [passportImg, setPassportImg] = useState<File | null>(null);
-  const navigate = useNavigate();
 
   const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const onlyNums = value.replace(/\D/g, "");
-    setFormData((prev) => ({ ...prev, [name]: onlyNums }));
+    setFormData((prev) => ({ ...prev, [name]: value.replace(/\D/g, "") }));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -99,9 +91,13 @@ const RegisterWorker = () => {
     }
     
     setLoading(true);
+    
+    // Prepare Multi-part form data for images
     const data = new FormData();
     Object.keys(formData).forEach((key) => {
-      if (key !== "confirm_password") data.append(key, (formData as any)[key]);
+      if (key !== "confirm_password") {
+        data.append(key, (formData as any)[key]);
+      }
     });
 
     if (idFront) data.append("id_photo_front", idFront);
@@ -109,20 +105,12 @@ const RegisterWorker = () => {
     if (passportImg) data.append("passport_img", passportImg);
 
     try {
-      const response = await fetch(`${API}/api/register/worker/`, {
-        method: "POST",
-        body: data,
-      });
-
-      if (response.ok) {
-        message.success("Registration Successful!");
-        navigate("/login/worker");
-      } else {
-        await response.json();
-        message.error("Registration failed. Email or ID may already be in use.");
-      }
+      // Call the centralized register function
+      await register({ type: 'worker', payload: data });
+      // Navigation is handled inside AuthContext, but you can add extra logic here if needed
     } catch (error) {
-      message.error("Could not connect to the server.");
+      // Error messages are handled inside AuthContext via 'antd' message
+      console.error("Registration error:", error);
     } finally {
       setLoading(false);
     }
@@ -135,14 +123,14 @@ const RegisterWorker = () => {
           
           <div className="bg-[#f3a82f] px-8 py-10 text-white relative">
             <div className="relative z-10">
-              <h2 className="text-3xl font-extrabold tracking-tight text-white">Worker Registration</h2>
+              <h2 className="text-3xl font-extrabold tracking-tight">Worker Registration</h2>
               <p className="mt-2 text-orange-50 opacity-90 font-medium">Create your profile and start getting job offers.</p>
             </div>
             <Briefcase className="absolute right-8 top-1/2 -translate-y-1/2 opacity-10" size={100} />
           </div>
 
           <form onSubmit={handleSubmit} className="p-8 space-y-10">
-            
+            {/* Personal Details */}
             <section>
               <div className="flex items-center gap-2 mb-6 text-slate-800">
                 <div className="p-2 bg-orange-100 rounded-lg text-[#f3a82f]"><User size={20}/></div>
@@ -153,7 +141,7 @@ const RegisterWorker = () => {
                 <FormInput label="Email Address*" icon={Mail} name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="john@example.com" />
                 <FormInput label="Password*" icon={Lock} name="password" type="password" value={formData.password} onChange={handleChange} required />
                 <FormInput label="Confirm Password*" icon={Lock} name="confirm_password" type="password" value={formData.confirm_password} onChange={handleChange} required />
-                <FormInput label="Phone Number* (Prefer Whatsapp Number) " icon={Phone} name="phone" type="text" inputMode="numeric" value={formData.phone} onChange={handleNumericChange} required placeholder="0712345678" />
+                <FormInput label="Phone Number*" icon={Phone} name="phone" type="text" inputMode="numeric" value={formData.phone} onChange={handleNumericChange} required placeholder="0712345678" />
                 <FormInput label="Expected Salary*" icon={DollarSign} name="expected_salary" type="text" inputMode="numeric" value={formData.expected_salary} onChange={handleNumericChange} required placeholder="Ksh 15,000" />
                 <FormInput label="Location*" icon={MapPin} name="location" type="text" value={formData.location} onChange={handleChange} required placeholder="City, Suburb" />
                 
@@ -182,16 +170,15 @@ const RegisterWorker = () => {
               </div>
             </section>
 
+            {/* Verification Documents */}
             <section className="bg-slate-50 -mx-8 px-8 py-8 border-y border-slate-100">
               <div className="flex items-center gap-2 mb-6 text-slate-800">
                 <div className="p-2 bg-blue-100 rounded-lg text-blue-600"><IdCard size={20}/></div>
                 <h3 className="text-lg font-bold">Verification Documents</h3>
               </div>
-              
               <div className="mb-6 max-w-sm">
                 <FormInput label="ID Number*" icon={IdCard} name="id_number" type="text" value={formData.id_number} onChange={handleNumericChange} required />
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <ImageUpload label="ID Front" file={idFront} setFile={setIdFront} />
                 <ImageUpload label="ID Back" file={idBack} setFile={setIdBack} />
@@ -199,6 +186,7 @@ const RegisterWorker = () => {
               </div>
             </section>
 
+            {/* Emergency Contact */}
             <section>
               <div className="flex items-center gap-2 mb-6 text-slate-800">
                 <div className="p-2 bg-red-100 rounded-lg text-red-600"><ShieldAlert size={20}/></div>

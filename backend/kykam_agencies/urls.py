@@ -8,7 +8,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     # 1. The Default Django Admin (Useful as a fallback/backup)
-    path('admin/', admin.site.urls),
+    path('root/admin/', admin.site.urls),
 
     # 2. Your Custom API Endpoints (Login, Register, Admin Management)
     # This points to the users/urls.py we configured in the previous step
