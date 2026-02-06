@@ -1,35 +1,39 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
-from rest_framework import generics, status, filters as drf_filters
-from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from ..serializers import (
-    LoginAdminSerializer, RegisterWorkerSerializer, RegisterEmployerSerializer, 
-    LoginWorkerSerializer, LoginEmployerSerializer,
-)
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
-from rest_framework.views import APIView
 from django.conf import settings
 from django.utils import timezone
-from rest_framework.permissions import IsAdminUser
-from django.middleware.csrf import get_token
 from django.http import JsonResponse
+from django.middleware.csrf import get_token
+
+from rest_framework import generics, status, filters as drf_filters
+from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.authentication import TokenAuthentication
+from ..serializers import (
+    LoginAdminSerializer, RegisterWorkerSerializer, RegisterEmployerSerializer, 
+    LoginWorkerSerializer, LoginEmployerSerializer,
+)
+
+# Import your custom CSRF-exempt class
+# Ensure authentication.py is in the same folder as this file
+from ..authentication import CsrfExemptSessionAuthentication
+
 User = get_user_model()
 
 def rotate_token(user):
     """
-    Deletes existing token and creates a new one to reset 
-    the 'created' timestamp for expiration logic.
+    Deletes existing token and creates a new one.
     """
     Token.objects.filter(user=user).delete()
     return Token.objects.create(user=user)
-
 
 # -----------------------------------------------------------
 # AUTHENTICATION & REGISTRATION
@@ -40,6 +44,8 @@ class RegisterWorkerView(generics.CreateAPIView):
     serializer_class = RegisterWorkerSerializer
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [AllowAny]
+    # Bypass CSRF and allow Token/Session auth
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -55,6 +61,7 @@ class RegisterEmployerView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterEmployerSerializer
     permission_classes = [AllowAny]
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -69,12 +76,12 @@ class RegisterEmployerView(generics.CreateAPIView):
 class WorkerLoginView(generics.GenericAPIView):
     serializer_class = LoginWorkerSerializer
     permission_classes = [AllowAny]
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data
-            # Reset token timer on login
             token = rotate_token(user)
             return Response({
                 "message": "Login successful",
@@ -88,12 +95,12 @@ class WorkerLoginView(generics.GenericAPIView):
 class EmployerLoginView(generics.GenericAPIView):
     serializer_class = LoginEmployerSerializer
     permission_classes = [AllowAny]
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data
-            # Reset token timer on login
             token = rotate_token(user)
             return Response({
                 "token": token.key,
@@ -106,12 +113,12 @@ class EmployerLoginView(generics.GenericAPIView):
 class AdminLoginView(generics.GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = LoginAdminSerializer  
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data
-        # Reset token timer on login
         token = rotate_token(user)
         return Response({
             "token": token.key,
@@ -121,34 +128,32 @@ class AdminLoginView(generics.GenericAPIView):
         }, status=status.HTTP_200_OK)
 
 class LogoutView(generics.GenericAPIView):
-    """
-    Standard logout to invalidate the current token immediately.
-    """
     permission_classes = [IsAuthenticated]
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request):
-        request.auth.delete() # Deletes the Token object from DB
+        if request.auth:
+            request.auth.delete() 
         return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
-    
+
+# -----------------------------------------------------------
+# PASSWORD MANAGEMENT & ACCOUNT DELETION
+# -----------------------------------------------------------
+
 class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request):
         email = request.data.get('email')
-        print(f"--- Reset request for: {email} ---") # Check if email is received
-        
         user = User.objects.filter(email__iexact=email).first()
         
         if user:
-            print(f"--- User found: {user.username} ---")
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-           
             reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
-
             
             try:
-                print("--- Attempting to send email via SMTP... ---")
                 send_mail(
                     "Password Reset Request",
                     f"Click the link below to reset your password:\n{reset_url}",
@@ -156,17 +161,14 @@ class PasswordResetRequestView(APIView):
                     [email],
                     fail_silently=False,
                 )
-                print("--- EMAIL SENT SUCCESSFULLY! Check Sent folder. ---")
             except Exception as e:
-                print(f"--- EMAIL FAILED! Error: {str(e)} ---")
-                # For debugging, return the error to the frontend (remove this in production)
                 return Response({"error": f"Mail system error: {str(e)}"}, status=500)
-        else:
-            print("--- NO USER FOUND with that email. ---")
         
         return Response({"message": "If an account exists, a link has been sent."}, status=200)
+
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request, uidb64, token):
         try:
@@ -179,14 +181,14 @@ class PasswordResetConfirmView(APIView):
             new_password = request.data.get('password')
             user.set_password(new_password)
             user.save()
-            # Important: Delete existing tokens so they must log in fresh
             Token.objects.filter(user=user).delete()
             return Response({"message": "Password reset successful."}, status=status.HTTP_200_OK)
         
         return Response({"error": "Invalid or expired link."}, status=status.HTTP_400_BAD_REQUEST)
-    
+
 class SoftDeleteUserView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def patch(self, request, user_id):
         try:
@@ -196,88 +198,52 @@ class SoftDeleteUserView(APIView):
 
         user.is_deleted = True
         user.deleted_at = timezone.now()
-        user.is_active = False  # VERY IMPORTANT
+        user.is_active = False
         user.save()
-
-        # Kill tokens immediately
         Token.objects.filter(user=user).delete()
 
-        return Response(
-            {"message": "User moved to trash successfully."},
-            status=status.HTTP_200_OK
-        )
-    
+        return Response({"message": "User moved to trash successfully."}, status=status.HTTP_200_OK)
+
 class PermanentDeleteUserView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def delete(self, request, user_id):
         confirm = request.query_params.get("confirm")
-
         if confirm != "true":
-            return Response(
-                {
-                    "error": "Confirmation required",
-                    "hint": "Add ?confirm=true to permanently delete this user"
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Confirmation required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=404)
 
-        # Prevent self-deletion
         if user == request.user:
-            return Response(
-                {"error": "You cannot delete your own account"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"error": "You cannot delete your own account"}, status=status.HTTP_403_FORBIDDEN)
 
-        # Delete related auth tokens
         Token.objects.filter(user=user).delete()
-
-        # HARD DELETE
         user.delete()
+        return Response({"message": "User permanently deleted"}, status=status.HTTP_200_OK)
 
-        return Response(
-            {"message": "User permanently deleted from system"},
-            status=status.HTTP_200_OK
-        )
-    
 class DeactivateMyAccountView(APIView):
     permission_classes = [IsAuthenticated]
+    authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def patch(self, request):
         user = request.user
-
-        if user.is_deleted:
-            return Response(
-                {"error": "Account already deactivated"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         user.is_deleted = True
         user.deleted_at = timezone.now()
         user.is_active = False
         user.save()
-
-        # Kill all sessions immediately
         Token.objects.filter(user=user).delete()
+        return Response({"message": "Account deactivated."}, status=status.HTTP_200_OK)
 
-        return Response(
-            {"message": "Your account has been deactivated successfully."},
-            status=status.HTTP_200_OK
-        )
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def set_csrf_token(request):
     """
-    Ensures the CSRF cookie is set on the user's browser.
-    Call this from React useEffect on the Home page.
+    Optional helper to set CSRF cookie. 
+    Note: Since we are bypassing CSRF, this is technically redundant now.
     """
     token = get_token(request)
-    return Response(
-        {"detail": "CSRF cookie set", "token": token}, 
-        status=status.HTTP_200_OK
-    )
+    return Response({"detail": "CSRF cookie set", "token": token}, status=status.HTTP_200_OK)
