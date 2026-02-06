@@ -17,7 +17,9 @@ from rest_framework.views import APIView
 from django.conf import settings
 from django.utils import timezone
 from rest_framework.permissions import IsAdminUser
-
+from django.middleware.csrf import get_token
+from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
 User = get_user_model()
 
 def rotate_token(user):
@@ -267,3 +269,15 @@ class DeactivateMyAccountView(APIView):
             {"message": "Your account has been deactivated successfully."},
             status=status.HTTP_200_OK
         )
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def set_csrf_token(request):
+    """
+    Ensures the CSRF cookie is set on the user's browser.
+    Call this from React useEffect on the Home page.
+    """
+    token = get_token(request)
+    return Response(
+        {"detail": "CSRF cookie set", "token": token}, 
+        status=status.HTTP_200_OK
+    )
