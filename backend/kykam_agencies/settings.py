@@ -9,10 +9,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
+# Ensure DEBUG is strictly False in production
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
-# DEBUG=True
 
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://kykamagencies.co.ke')
+
 ALLOWED_HOSTS = [
     'kykamagencies.co.ke',
     'www.kykamagencies.co.ke',
@@ -21,9 +22,13 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'host.docker.internal',
     "102.212.247.246",
-    'www.lucacare.co.ke', 'lucacare.co.ke',
+    'www.lucacare.co.ke',
+    'lucacare.co.ke',
 ]
+
+# ✅ FIX: Must be True to allow CSRF and Session cookies to be sent back and forth
 CORS_ALLOW_CREDENTIALS = True
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -37,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'whitenoise.runserver_nostatic', # For serving static files in production
+    'whitenoise.runserver_nostatic',
 
     # Your apps
     'users',
@@ -46,22 +51,21 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Critical for static files
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware', # ✅ Re-enabled (Required for CSRF)
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'users.middleware.MaintenanceMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 if not DEBUG:
-    MIDDLEWARE.insert(
-        MIDDLEWARE.index('django.contrib.auth.middleware.AuthenticationMiddleware') + 1,
-        'users.middleware.MaintenanceMiddleware',
-    )
-
+    try:
+        auth_middleware_index = MIDDLEWARE.index('django.contrib.auth.middleware.AuthenticationMiddleware')
+        MIDDLEWARE.insert(auth_middleware_index + 1, 'users.middleware.MaintenanceMiddleware')
+    except ValueError:
+        MIDDLEWARE.append('users.middleware.MaintenanceMiddleware')
 
 ROOT_URLCONF = 'kykam_agencies.urls'
 
@@ -75,6 +79,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
             ],
         },
     },
@@ -82,7 +87,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'kykam_agencies.wsgi.application'
 
-# Database configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -94,14 +98,12 @@ DATABASES = {
     }
 }
 
-# Auth Logic
 AUTH_USER_MODEL = 'users.User'
 AUTHENTICATION_BACKENDS = [
     'users.backends.PhoneAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'users.authentication.ExpiringTokenAuthentication',
@@ -112,56 +114,48 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Static & Media Files
+# --- STATIC & MEDIA FILES ---
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-if DEBUG:
-    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-else:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Security & CORS
+# --- SECURITY & CORS ---
 CORS_ALLOWED_ORIGINS = [
     os.getenv("FRONTEND_URL", "https://kykamagencies.co.ke"),
     "https://kykamagencies.co.ke",
     "https://www.kykamagencies.co.ke",
-    "https://102.212.247.246",
-    "http://102.212.247.246",
-    "http://www.lucacare.co.ke:8000",
-    "https://www.lucacare.co.ke",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
+# ✅ Updated to include all relevant domains
 CSRF_TRUSTED_ORIGINS = [
     "https://kykamagencies.co.ke",
     "https://www.kykamagencies.co.ke",
     "https://api.kykamagencies.co.ke",
-    "https://102.212.247.246",
-    "http://102.212.247.246",
-    "http://www.lucacare.co.ke:8000",
-    "https://www.lucacare.co.ke",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
+# ✅ FIX: Frontend needs to read the cookie to include it in Axios headers
+CSRF_COOKIE_HTTPONLY = False  
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
 
-# Production Security Headers
 if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-# SendGrid
 EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

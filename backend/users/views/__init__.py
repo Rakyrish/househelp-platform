@@ -1,7 +1,7 @@
 from .auth import (
     RegisterWorkerView, RegisterEmployerView, 
     WorkerLoginView, EmployerLoginView, AdminLoginView, PasswordResetConfirmView,PasswordResetRequestView,SoftDeleteUserView,
-    PermanentDeleteUserView, DeactivateMyAccountView
+    PermanentDeleteUserView, DeactivateMyAccountView, set_csrf_token
 )
 from .admin import (
     AdminUserManagementViewSet, AdminHiringRegistryViewSet, 
