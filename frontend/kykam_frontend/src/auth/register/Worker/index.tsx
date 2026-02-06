@@ -180,9 +180,9 @@ const RegisterWorker = () => {
                 <FormInput label="ID Number*" icon={IdCard} name="id_number" type="text" value={formData.id_number} onChange={handleNumericChange} required />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <ImageUpload label="ID Front" file={idFront} setFile={setIdFront} />
-                <ImageUpload label="ID Back" file={idBack} setFile={setIdBack} />
-                <ImageUpload label="Passport Image" file={passportImg} setFile={setPassportImg} />
+                <ImageUpload label="ID Front" file={idFront} setFile={setIdFront} required />
+                <ImageUpload label="ID Back" file={idBack} setFile={setIdBack} required/>
+                <ImageUpload label="Passport Image" file={passportImg} setFile={setPassportImg} required />
               </div>
             </section>
 

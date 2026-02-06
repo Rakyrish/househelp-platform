@@ -13,9 +13,8 @@ const Home = () => {
       <section 
         className="relative flex flex-col justify-center items-center text-white text-center px-4 min-h-[85vh] md:h-[85vh]"
         style={{
-          // ✅ FIX: Clean, high-quality image without watermarks
-          // ✅ FIX: Stronger overlay (0.7) to make the text readable against light backgrounds
-          backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://media.istockphoto.com/id/1570318885/photo/the-concept-of-cleaning-services-for-premises.jpg?s=612x612&w=0&k=20&c=hy3mucMJ-E-kjj5AU4m_T2qcxbbFloqe5zn40JCf7lU=')",
+         
+          backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/pic2.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
