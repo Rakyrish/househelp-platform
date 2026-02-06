@@ -4,6 +4,16 @@ from django.utils import timezone
 from django.conf import settings
 from datetime import timedelta
 
+from rest_framework.authentication import SessionAuthentication
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        """
+        By returning None, we bypass the CSRF check entirely 
+        for requests using this authentication class.
+        """
+        return
+    
 class ExpiringTokenAuthentication(TokenAuthentication):
     def authenticate_credentials(self, key):
         model = self.get_model()
