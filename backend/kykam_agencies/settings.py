@@ -26,10 +26,7 @@ ALLOWED_HOSTS = [
     'lucacare.co.ke',
 ]
 
-# ✅ FIX: Must be True to allow CSRF and Session cookies to be sent back and forth
 CORS_ALLOW_CREDENTIALS = True
-
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,7 +39,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'whitenoise.runserver_nostatic',
+    'whitenoise.runserver_nostatic',  # Listed only once now
 
     # Your apps
     'users',
@@ -52,7 +49,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware', # ✅ Re-enabled (Required for CSRF)
+    'django.contrib.sessions.middleware.SessionMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -60,6 +57,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Maintenance Middleware logic
 if not DEBUG:
     try:
         auth_middleware_index = MIDDLEWARE.index('django.contrib.auth.middleware.AuthenticationMiddleware')
@@ -131,7 +129,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-# ✅ Updated to include all relevant domains
 CSRF_TRUSTED_ORIGINS = [
     "https://kykamagencies.co.ke",
     "https://www.kykamagencies.co.ke",
@@ -140,11 +137,11 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-# ✅ FIX: Frontend needs to read the cookie to include it in Axios headers
-CSRF_COOKIE_HTTPONLY = False  
+CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
 
+# Production Security Headers
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

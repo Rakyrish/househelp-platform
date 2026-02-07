@@ -36,6 +36,8 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - ./media:/app/media
+      - /opt/kykam/backend/media:/app/media
+      - /opt/kykam/backend/staticfiles:/app/staticfiles
     # expose:
     #   - "8000"
     ports:
@@ -47,25 +49,25 @@ services:
       - kykam_network
 
   # --- NGINX (GATEKEEPER) ---
-  nginx:
-    image: nginx:alpine
-    container_name: kykam_nginx
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - static_volume:/app/staticfiles:ro
-      - ./media:/app/media:ro
-      - ./frontend/kykam_frontend/dist:/usr/share/nginx/html:ro
+#  nginx:
+ #   image: nginx:alpine
+  #  container_name: kykam_nginx
+   # restart: always
+   # ports:
+    #  - "80:80"
+     # - "443:443"
+   # volumes:
+    #  - ./nginx/conf.d:/etc/nginx/conf.d:ro
+     # - static_volume:/app/staticfiles:ro
+     # - ./media:/app/media:ro
+     # - ./frontend/kykam_frontend/dist:/usr/share/nginx/html:ro
       # Fix: Only use the relative path for portability
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
-    depends_on:
-      - backend
-    networks:
-      - kykam_network
+     # - ./certbot/conf:/etc/letsencrypt:ro
+    #  - ./certbot/www:/var/www/certbot:ro
+   # depends_on:
+    #  - backend
+   # networks:
+     # - kykam_network
 networks:
   kykam_network:
     driver: bridge

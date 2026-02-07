@@ -23,7 +23,7 @@ import axios from 'axios'
 const { Search } = Input
 const { Option } = Select
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API = import.meta.env.VITE_API_BASE_URL || 'https://kykamagencies.co.ke'
 
 const getFullUrl = (path?: string) =>
   path?.startsWith('http') ? path : path ? `${API}${path}` : undefined
