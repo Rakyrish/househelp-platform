@@ -105,7 +105,8 @@ AUTHENTICATION_BACKENDS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'users.authentication.ExpiringTokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        'users.authentication.CsrfExemptSessionAuthentication', # This one replaces SessionAuthentication
+        'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -140,6 +141,8 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
+# CSRF_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'
+# SESSION_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'
 
 # Production Security Headers
 if not DEBUG:

@@ -89,6 +89,9 @@ const RegisterWorker = () => {
     if (formData.password !== formData.confirm_password) {
       return message.error("Passwords do not match!");
     }
+    if (!idFront || !idBack || !passportImg) {
+      return message.error("Please upload all required documents: ID Front, ID Back, and Passport Image.");
+    }
     
     setLoading(true);
     

@@ -14,4 +14,4 @@ staticfiles/
 node_modules/
 dist/
 build/
-.eslintcache
+.eslintcache.env
