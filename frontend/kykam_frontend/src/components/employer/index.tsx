@@ -84,23 +84,30 @@ const EmployerDashboard = () => {
         <>
         {/* Advice Banner for Employers */}
           <Alert
-            className="mb-8 rounded-2xl border-none bg-indigo-50"
-            message={
-              <div className="flex items-center gap-3 py-1">
-                <div className="bg-indigo-600 p-2 rounded-xl">
-                  <SafetyCertificateOutlined className="text-white text-xl" />
-                </div>
-                <div>
-                  <h4 className="m-0 font-bold text-indigo-900">Priority Hiring Tip</h4>
-                  <p className="m-0 text-indigo-700 text-xs">
-                    Workers with the <span className="font-black text-indigo-900">VERIFIED</span> badge have undergone mandatory ID background checks. 
-                    They are 80% more likely to respond to your requests within 2 hours.
-                  </p>
-                </div>
-              </div>
-            }
-            type="info"
-          />
+  className="mb-6 rounded-2xl border-2 border-orange-400 bg-gradient-to-r from-orange-50 to-white shadow-lg animate-pulse-slow"
+  message={
+    <div className="flex items-center gap-4 py-2">
+      {/* Icon Container with Ping Effect */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-red-500 rounded-xl animate-ping opacity-20"></div>
+        <div className="relative bg-red-600 p-3 rounded-xl shadow-md">
+          <SafetyCertificateOutlined className="text-white text-2xl" />
+        </div>
+      </div>
+      
+      <div>
+        <h4 className="m-0 font-black text-orange-900 text-base uppercase tracking-tight">
+          Priority Hiring Tip
+        </h4>
+        <p className="m-0 text-slate-700 text-sm leading-relaxed">
+          Workers with the <span className="bg-orange-200 px-1 rounded text-orange-900 font-bold italic">VERIFIED</span> badge have cleared background checks. 
+          <br />
+          <span className="font-bold text-red-600">80% faster response time!</span>
+        </p>
+      </div>
+    </div>
+  }
+/>
           <div className="flex flex-col md:flex-row gap-4 mb-8">
             <Input
               prefix={<SearchOutlined className="text-slate-400" />}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+<url>
+  <loc>https://kykamagencies.co.ke/</loc>
+  <priority>1.0</priority>
+</url>
+
+<url>
+  <loc>https://kykamagencies.co.ke/register/worker</loc>
+</url>
+
+<url>
+  <loc>https://kykamagencies.co.ke/register/employer</loc>
+</url>
+
+<url>
+  <loc>https://kykamagencies.co.ke/workers</loc>
+</url>
+
+</urlset>

@@ -57,7 +57,7 @@ urlpatterns = [
     # Use 'admin/users/' to match your frontend XHR request
     path('admin/users/<int:user_id>/reset-password/', views.AdminUserPasswordResetView.as_view(), name='admin-password-reset'),
     path('admin/manage-users/<int:user_id>/permanent_erase/', views.AdminPermanentDeleteUserView.as_view(), name='admin-permanent-erase'),
-    path('contact-us/', views.ContactUsView.as_view()),
+    path('contact-us/', views.ContactUsView.as_view(), name='contact'),
     path('set-csrf/', views.set_csrf_token, name='set-csrf'),
    
     # Include all router-generated URLs

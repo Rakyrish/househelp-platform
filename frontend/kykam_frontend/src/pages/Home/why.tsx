@@ -1,25 +1,37 @@
 import React from 'react';
+import { ShieldCheck, Map, HandCoins } from 'lucide-react';
 
 function Why() {
   const sectionStyle = {
     padding: "100px 20px", 
     fontFamily: "'Inter', 'Segoe UI', sans-serif",
     textAlign: "center",
-    backgroundColor: "#f8fafc" // A slightly cleaner, more modern light grey/blue
+    backgroundColor: "#f8fafc"
   } as React.CSSProperties;
 
   const cardStyle = {
     backgroundColor: "white",
     padding: "40px 30px",
-    borderRadius: "20px",
-    boxShadow: "0 10px 30px -10px rgba(0,0,0,0.1)",
+    borderRadius: "24px", // Slightly rounder for a friendlier feel
+    boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)",
     width: "320px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    transition: "transform 0.3s ease",
     border: "1px solid #f1f5f9"
   } as React.CSSProperties;
+
+  const iconContainerStyle = {
+    marginBottom: "24px", 
+    backgroundColor: "#fff7ed", // Kykam light orange tint
+    width: "80px", 
+    height: "80px", 
+    display: "flex", 
+    alignItems: "center", 
+    justifyContent: "center", 
+    borderRadius: "20px", // Squircle shape
+    color: "#f3a82f" // Kykam Brand Orange
+  };
 
   return (
     <section style={sectionStyle}>
@@ -34,18 +46,10 @@ function Why() {
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "30px" }}>
           
           {/* Card 1: Safety */}
-          <div style={cardStyle} className="hover-lift">
-            <div style={{ 
-              fontSize: "40px", 
-              marginBottom: "20px", 
-              backgroundColor: "#fff7ed", 
-              width: "80px", 
-              height: "80px", 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center", 
-              borderRadius: "50%" 
-            }}>🛡️</div>
+          <div style={cardStyle}>
+            <div style={iconContainerStyle}>
+              <ShieldCheck size={40} strokeWidth={1.5} />
+            </div>
             <h3 style={{ color: "#0f172a", marginBottom: "15px", fontSize: "22px", fontWeight: "700" }}>Fully Verified</h3>
             <p style={{ color: "#64748b", lineHeight: "1.7", fontSize: "15px" }}>
               We vet workers using National ID, Next of Kin data, and Good Conduct images to ensure your family's absolute safety.
@@ -53,18 +57,10 @@ function Why() {
           </div>
 
           {/* Card 2: Coverage */}
-          <div style={cardStyle} className="hover-lift">
-            <div style={{ 
-              fontSize: "40px", 
-              marginBottom: "20px", 
-              backgroundColor: "#fff7ed", 
-              width: "80px", 
-              height: "80px", 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center", 
-              borderRadius: "50%" 
-            }}>🇰🇪</div>
+          <div style={cardStyle}>
+            <div style={iconContainerStyle}>
+              <Map size={40} strokeWidth={1.5} />
+            </div>
             <h3 style={{ color: "#0f172a", marginBottom: "15px", fontSize: "22px", fontWeight: "700" }}>Nationwide Reach</h3>
             <p style={{ color: "#64748b", lineHeight: "1.7", fontSize: "15px" }}>
               From the heart of Nairobi to Nakuru, Kisumu, and Mombasa—Kykam brings professional service to every corner of Kenya.
@@ -72,18 +68,10 @@ function Why() {
           </div>
 
           {/* Card 3: Fairness */}
-          <div style={cardStyle} className="hover-lift">
-            <div style={{ 
-              fontSize: "40px", 
-              marginBottom: "20px", 
-              backgroundColor: "#fff7ed", 
-              width: "80px", 
-              height: "80px", 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center", 
-              borderRadius: "50%" 
-            }}>💰</div>
+          <div style={cardStyle}>
+            <div style={iconContainerStyle}>
+              <HandCoins size={40} strokeWidth={1.5} />
+            </div>
             <h3 style={{ color: "#0f172a", marginBottom: "15px", fontSize: "22px", fontWeight: "700" }}>Direct & Fair</h3>
             <p style={{ color: "#64748b", lineHeight: "1.7", fontSize: "15px" }}>
               We eliminate exploitative middlemen. Workers earn fair wages, and employers enjoy clear, honest communication.

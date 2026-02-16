@@ -5,11 +5,17 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from .sitemaps import StaticViewSitemap
+from django.contrib.sitemaps.views import sitemap
+
+sitemaps = {
+    'static': StaticViewSitemap,
+}
 
 urlpatterns = [
     # 1. The Default Django Admin (Useful as a fallback/backup)
     path('root/admin/', admin.site.urls),
-
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
     # 2. Your Custom API Endpoints (Login, Register, Admin Management)
     # This points to the users/urls.py we configured in the previous step
     path('api/', include('users.urls')),
