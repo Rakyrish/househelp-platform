@@ -20,8 +20,7 @@ import {
   DeleteOutlined,
   UnlockOutlined,
   CheckCircleOutlined,
-  ReloadOutlined,
-  SafetyCertificateOutlined,
+  ReloadOutlined
 } from "@ant-design/icons";
 import axios from "axios";
 import { CircleAlert } from "lucide-react";
