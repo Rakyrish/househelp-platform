@@ -26,7 +26,7 @@ ALLOWED_HOSTS = [
     'lucacare.co.ke',
 ]
 
-# ✅ FIX: Must be True to allow CSRF and Session cookies to be sent back and forth
+SITE_ID = 2
 CORS_ALLOW_CREDENTIALS = True
 
 # Application definition
@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'whitenoise.runserver_nostatic',
 
-    # Your apps
+ 
     'users',
 ]
 
@@ -144,7 +144,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # ✅ FIX: Frontend needs to read the cookie to include it in Axios headers
-CSRF_COOKIE_HTTPONLY = False  
+CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
 # CSRF_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'

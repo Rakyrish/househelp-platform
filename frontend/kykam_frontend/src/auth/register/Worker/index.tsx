@@ -68,7 +68,8 @@ const RegisterWorker = () => {
     kin_phone: "",
     kin_relationship: "",
     experience: "",
-    expected_salary: ""
+    expected_salary: "",
+    worker_type: ""
   });
 
   const [idFront, setIdFront] = useState<File | null>(null);
@@ -156,6 +157,27 @@ const RegisterWorker = () => {
                     <option value="few months">Less than a year</option>
                     <option value="1-3">1-3 years</option>
                     <option value="5+">5+ years</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
+                    Type of Help Needed*
+                  </label>
+                  <select
+                    name="worker_type"
+                    value={formData.worker_type}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#f3a82f]/20 outline-none cursor-pointer"
+                  >
+                    <option value="general_househelp">General Househelp</option>
+                    <option value="nanny">Nanny / Childcare</option>
+                    <option value="cook">Professional Cook</option>
+                    <option value="gardener">Gardener</option>
+                    <option value="elderly">Elderly Care</option>
+                    <option value="driver">Driver</option>
+                    <option value="other">Other</option>
+                    
                   </select>
                 </div>
 

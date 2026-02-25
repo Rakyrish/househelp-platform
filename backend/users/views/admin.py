@@ -252,42 +252,103 @@ class AdminPermanentDeleteUserView(APIView):
             status=status.HTTP_200_OK
         )
 class ContactUsView(APIView):
-    permission_classes = [AllowAny] # Allow everyone to contact you
+
+    permission_classes = [AllowAny]
+
+
 
     def post(self, request):
+
         name = request.data.get('name')
+
         sender_email = request.data.get('email')
+
         subject_text = request.data.get('subject')
+
         message_body = request.data.get('message')
 
+
+
         if not all([name, sender_email, message_body]):
+
             return Response({"error": "Please fill in all fields."}, status=400)
 
-        # The email YOU receive
+
+
+        # 1. Prepare the email details
+
         full_subject = f"KYKAM INQUIRY: {subject_text}"
+
         
+
         html_content = f"""
-        <h2>New Inquiry from Kykam Platform</h2>
-        <p><strong>Name:</strong> {name}</p>
-        <p><strong>Reply to:</strong> {sender_email}</p>
-        <p><strong>Message:</strong></p>
-        <p>{message_body}</p>
+
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+
+            <h2 style="color: #0044cc;">New Inquiry from Kykam Platform</h2>
+
+            <p><strong>Name:</strong> {name}</p>
+
+            <p><strong>Visitor Email:</strong> {sender_email}</p>
+
+            <hr>
+
+            <p><strong>Message:</strong></p>
+
+            <p style="background: #f4f4f4; padding: 15px; border-radius: 5px;">{message_body}</p>
+
+            <hr>
+
+            <p><small>This email was sent from the Kykam Agencies contact form.</small></p>
+
+        </div>
+
         """
-        
+
         text_content = strip_tags(html_content)
 
+
+
         try:
+
+            # 2. Create the email object
+
             msg = EmailMultiAlternatives(
-                full_subject,
-                text_content,
-                settings.DEFAULT_FROM_EMAIL, 
-                [settings.DEFAULT_FROM_EMAIL] 
+
+                subject=full_subject,
+
+                body=text_content,
+
+                from_email=settings.DEFAULT_FROM_EMAIL, 
+
+                to=["Kykamagency1@gmail.com"],      
+
+                reply_to=[sender_email]               
+
             )
-            # This allows you to click 'Reply' in your Gmail and email the user back directly
-            msg.extra_headers = {'Reply-To': sender_email}
+
+            
+
+            # 3. Attach the HTML version for pretty viewing in Gmail
+
             msg.attach_alternative(html_content, "text/html")
+
+            
+
+            # 4. Send
+
             msg.send()
 
+
+
             return Response({"success": "Your message has been received. We will get back to you soon!"})
+
+            
+
         except Exception as e:
+
+            # Log the error for debugging
+
+            print(f"Email Error: {e}") 
+
             return Response({"error": "System busy. Please try again later."}, status=500)

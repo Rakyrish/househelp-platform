@@ -35,6 +35,7 @@ class User(AbstractUser):
         ('gardener', 'Gardener'),
         ('elderly', 'Elderly Care'),
         ('other', 'Other'),
+        ('driver', 'Driver'),
     )
   
     STATUS_CHOICES = (

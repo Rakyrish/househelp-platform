@@ -174,7 +174,7 @@ const WorkerDashboard = () => {
       key: '2',
       label: (
         <Badge count={invites.filter((i:any)=>i.status === 'pending').length} offset={[12, 0]}>
-          <span className="px-2">Job Invites</span>
+          <span className="px-2 color-white ">Job Invites</span>
         </Badge>
       ),
       children: completionScore < 100 ? (

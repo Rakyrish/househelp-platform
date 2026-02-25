@@ -25,7 +25,7 @@ services:
 
   # --- DJANGO BACKEND ---
   backend:
-    build: 
+    build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: kykam_backend
@@ -35,7 +35,7 @@ services:
     command: daphne -b 0.0.0.0 -p 8000 kykam_agencies.asgi:application
     volumes:
       - static_volume:/app/staticfiles
-      - ./media:/app/media
+      - ./backend/media:/app/media
     # expose:
     #   - "8000"
     ports:
@@ -55,13 +55,15 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /opt/kykam/certbot/www:/var/www/certbot:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - static_volume:/app/staticfiles:ro
-      - ./media:/app/media:ro
+      - ./backend/media:/app/media:ro
       - ./frontend/kykam_frontend/dist:/usr/share/nginx/html:ro
       # Fix: Only use the relative path for portability
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
+   #   - ./certbot/conf:/etc/letsencrypt:ro
+  #    - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - backend
     networks:

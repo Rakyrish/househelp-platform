@@ -84,8 +84,8 @@ const RegisterEmployer = () => {
   const { register } = useAuth(); // 2. Hook into AuthContext
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const [idFront, setIdFront] = useState<File | null>(null);
-    const [idBack, setIdBack] = useState<File | null>(null);
+  // const [idFront, setIdFront] = useState<File | null>(null);
+  //   const [idBack, setIdBack] = useState<File | null>(null);
     const [passportImg, setPassportImg] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
@@ -130,9 +130,9 @@ const RegisterEmployer = () => {
     if (!phoneRegex.test(formData.phone))
       return message.error("Invalid phone format (07... or 01...)");
 
-    if (!idFront || !idBack || !passportImg) {
+    if ( !passportImg) {
       return message.error(
-        "Please upload all required documents: ID Front, ID Back, and Passport Image.",
+        "Please upload  Passport Image.",
       );
     }
 
@@ -150,8 +150,8 @@ const RegisterEmployer = () => {
       });
 
       // 3. Append the File objects
-      data.append("id_photo_front", idFront);
-      data.append("id_photo_back", idBack);
+      // data.append("id_photo_front", idFront);
+      // data.append("id_photo_back", idBack);
       data.append("passport_img", passportImg);
 
       // 4. Send the 'data' (FormData) object, not 'payload'
@@ -252,11 +252,18 @@ const RegisterEmployer = () => {
               </div>
             </section>
 
-            {/* <div className="mb-6 max-w-sm">
+            <div className="mb-6 max-w-sm grid grid-cols-1 md:grid-cols-1 gap-4">
                 <FormInput label="ID Number*" icon={IdCard} name="id_number" type="text" value={formData.id_number} onChange={handleNumericChange} required />
-            </div> */}
+                 <ImageUpload
+                  label="Passport Image*"
+                  file={passportImg}
+                  setFile={setPassportImg}
+                  required
+                />
+            </div>
             {/* Verification Documents */}
-            <section className="bg-slate-50 -mx-8 px-8 py-8 border-y border-slate-100">
+            
+            {/* <section className="bg-slate-50 -mx-8 px-8 py-8 border-y border-slate-100">
               <div className="flex items-center gap-2 mb-6 text-slate-800">
                 <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
                   <IdCard size={20} />
@@ -294,7 +301,7 @@ const RegisterEmployer = () => {
                   required
                 />
               </div>
-            </section>
+            </section> */}
 
             {/* Section 2: Job Requirements */}
             <section className="bg-slate-50 -mx-8 px-8 py-8 border-y border-slate-100">
@@ -332,6 +339,9 @@ const RegisterEmployer = () => {
                     <option value="cook">Professional Cook</option>
                     <option value="gardener">Gardener</option>
                     <option value="elderly">Elderly Care</option>
+                    <option value="driver">Driver</option>
+                    <option value="other">Other</option>
+                    
                   </select>
                 </div>
 

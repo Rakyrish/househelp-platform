@@ -16,7 +16,7 @@ class RegisterWorkerSerializer(serializers.ModelSerializer):
         fields = [
             'full_name', 'password', 'email', 'phone', 'location', 'age',
             'id_number', 'id_photo_front', 'id_photo_back', 'passport_img', 
-            'kin_name', 'kin_phone', 'kin_relationship', 'gender', 'experience', 'expected_salary'
+            'kin_name', 'kin_phone', 'kin_relationship', 'gender', 'experience', 'expected_salary', 'worker_type'
         ]
 
     def create(self, validated_data):
@@ -45,7 +45,7 @@ class RegisterEmployerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['full_name', 'password', 'email', 'phone', 'location', 'family_size', 'worker_type', 'salary', 'requirements', 'start_date', 'accommodation', 'id_number' ]
+        fields = ['full_name', 'password', 'email', 'phone','passport_img', 'location', 'family_size', 'worker_type', 'salary', 'requirements', 'start_date', 'accommodation', 'id_number' ]
 
     def create(self, validated_data):
         full_name = validated_data.pop('full_name', '')

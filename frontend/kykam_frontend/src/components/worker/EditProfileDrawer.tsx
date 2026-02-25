@@ -83,6 +83,10 @@ const EditProfileDrawer = ({ visible, onClose, initialData, onUpdate }: any) => 
             <Option value="house_cleaner">House Cleaner</Option>
             <Option value="cook">Professional Cook</Option>
             <Option value="gardener">Gardener</Option>
+            <Option value="elderly">Elderly Care</Option>
+            <Option value="driver">Driver</Option>
+            <Option value="other">Other</Option>
+
           </Select>
         </Form.Item>
 
