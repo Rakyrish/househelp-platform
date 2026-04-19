@@ -4,7 +4,7 @@
 @tailwind utilities;
 /* Global container padding for mobile and desktop */
 .page-container {
-  @apply mx-auto;
+  @apply mx-auto w-full max-w-[100vw] overflow-x-hidden;
 
   /* Only applies between 0px and 639px */
   @media (max-width: 639px) {
@@ -17,8 +17,8 @@
 }
 
 /* Optional: custom styles */
-body {
-  @apply bg-gray-100 font-sans;
+html, body {
+  @apply bg-gray-100 font-sans w-full overflow-x-hidden;
 }
 
 /* Custom Orange Theme Overrides */

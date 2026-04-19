@@ -59,13 +59,13 @@ const EditProfileDrawer = ({ visible, onClose, initialData, onUpdate }: any) => 
       onClose={onClose}
       open={visible}
       extra={
-        <Space>
-          <Button onClick={onClose}>Cancel</Button>
+        <Space size="middle">
+          <Button onClick={onClose} className="rounded-xl font-medium border-slate-200">Cancel</Button>
           <Button 
             onClick={() => form.submit()} 
             type="primary" 
             loading={loading} 
-            className="bg-[#f3a82f] border-none"
+            className="bg-[#f3a82f] hover:!bg-[#e69815] transition-colors border-none font-bold rounded-xl shadow-md shadow-orange-500/20 px-6 h-9"
           >
             Save Changes
           </Button>

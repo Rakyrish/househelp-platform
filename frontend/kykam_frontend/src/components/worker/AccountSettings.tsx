@@ -68,10 +68,10 @@ const AccountSettings = () => {
 
 
   return (
-    <Card className="rounded-2xl border-none shadow-sm overflow-hidden">
-      <div className="mb-6">
-        <h3 className="text-lg font-bold text-slate-800">Security & Privacy</h3>
-        <p className="text-slate-500 text-sm">Update your password to keep your account safe.</p>
+    <Card className="rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden p-2 sm:p-6 mb-8 mt-2">
+      <div className="mb-8">
+        <h3 className="text-2xl font-extrabold text-slate-800">Security & Privacy</h3>
+        <p className="text-slate-500 text-base mt-2">Update your password regularly to keep your Kykam account secure.</p>
       </div>
 
       <Form form={form} layout="vertical" onFinish={handleChangePassword}>
@@ -94,20 +94,23 @@ const AccountSettings = () => {
           <Input.Password prefix={<LockOutlined />} placeholder="••••••••" />
         </Form.Item>
 
-        <Button type="primary" htmlType="submit" className="bg-[#f3a82f] border-none rounded-lg">
+        <Button type="primary" size="large" htmlType="submit" className="bg-[#f3a82f] hover:!bg-[#e69815] border-none rounded-xl font-bold shadow-lg shadow-orange-500/20 px-8 mt-2">
           Update Password
         </Button>
       </Form>
 
-      <Divider className="my-8" />
+      <Divider className="my-10 border-slate-200" />
 
-      <div className="bg-red-50 p-6 rounded-2xl border border-red-100">
-        <h4 className="text-red-800 font-bold mb-1">Danger Zone</h4>
-        <p className="text-red-600 text-sm mb-4">
+      <div className="bg-red-50 p-8 rounded-[2rem] border border-red-100 shadow-sm">
+        <div className="flex items-center gap-3 mb-2">
+          <WarningOutlined className="text-red-500 text-2xl" />
+          <h4 className="text-red-800 font-extrabold text-xl m-0">Danger Zone</h4>
+        </div>
+        <p className="text-red-600 text-base mb-6">
           Permanently delete your account and all associated job history. This action cannot be undone.
         </p>
-        <Button danger type="dashed" onClick={confirmDelete}>
-          Delete Account
+        <Button danger type="dashed" size="large" className="rounded-xl font-bold hover:!bg-red-100 px-6" onClick={confirmDelete}>
+          Delete My Account
         </Button>
       </div>
     </Card>

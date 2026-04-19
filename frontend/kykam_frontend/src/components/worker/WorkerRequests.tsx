@@ -78,15 +78,15 @@ const WorkerRequests = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-10">
       <div className="mx-auto max-w-4xl">
         {/* HEADER */}
-        <div className="mb-10 rounded-3xl bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
+        <div className="mb-8 rounded-[2rem] bg-gradient-to-r from-orange-50 to-amber-50 p-8 shadow-sm border border-orange-100">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <Title level={2} className="!mb-1 !font-extrabold">
+              <Title level={2} className="!mb-1 !font-extrabold text-slate-800">
                 Job Invitations
               </Title>
-              <Text type="secondary">
+              <Text className="text-slate-600 text-base">
                 You have{' '}
-                <span className="font-bold text-orange-600">
+                <span className="font-bold text-[#f3a82f] bg-orange-100 px-2 py-0.5 rounded-full">
                   {pendingCount}
                 </span>{' '}
                 pending requests
@@ -96,9 +96,10 @@ const WorkerRequests = () => {
             <Button
               icon={<ReloadOutlined />}
               onClick={fetchRequests}
-              className="rounded-xl font-semibold"
+              size="large"
+              className="rounded-xl font-semibold border-orange-200 text-orange-600 hover:!text-orange-700 hover:!border-orange-400"
             >
-              Refresh
+              Refresh List
             </Button>
           </div>
         </div>
@@ -109,17 +110,18 @@ const WorkerRequests = () => {
           dataSource={requests}
           locale={{
             emptyText: (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="No job invites yet"
-              />
+              <div className="py-20 bg-white rounded-[2rem] border border-dashed border-slate-200 shadow-sm text-center">
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={<span className="text-slate-500 font-medium text-lg">No job invites yet</span>}
+                />
+              </div>
             ),
           }}
           renderItem={(req: any) => (
             <Card
               key={req.id}
-              className="mb-6 rounded-3xl border-none shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-              
+              className="mb-6 rounded-[2rem] border border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#f3a82f]/10 overflow-hidden relative"
             >
               {/* TOP */}
               <div className="flex items-start justify-between">
@@ -128,7 +130,7 @@ const WorkerRequests = () => {
                     size={64}
                     src={req.employer_image}
                     icon={<UserOutlined />}
-                    className="bg-orange-100 text-orange-600"
+                    className="bg-orange-100 text-orange-600 shadow-inner"
                   />
 
                   <div>

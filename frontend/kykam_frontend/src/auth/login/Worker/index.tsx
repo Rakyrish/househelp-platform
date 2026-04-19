@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { message } from "antd";
 
@@ -11,36 +11,74 @@ function WorkerLogin() {
   const [formData, setFormData] = useState({ phone: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // 2. Handle input changes
+  // Show error message if redirected here after session expiry
+  useEffect(() => {
+    if (searchParams.get("expired") === "true") {
+      message.error("Your session has expired. Please verify your account to continue.");
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Keep handleChange simple - no transformation, just store as typed
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 3. Handle Form Submission
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
+  // Normalize phone silently at submission time
+  const normalizePhone = (phone: string): string => {
+    if (/^0[71]/.test(phone)) {
+      return "254" + phone.slice(1);
+    }
+    return phone;
+  };
 
-  try {
-    await login({
-      phone: formData.phone,
-      password: formData.password,
-      type: "worker",
-    });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    // ✅ If we got here, login succeeded
-    message.success("Login successful!");
-    navigate("/dashboard/worker");
+    try {
+      await login({
+        phone: normalizePhone(formData.phone), // 👈 normalized here silently
+        password: formData.password,
+        type: "worker",
+      });
 
-  } catch (err: any) {
-  
-    message.error("Invalid credentials. Please try again.")
-  } finally {
-    setLoading(false);
-  }
-};
+      message.success("Login successful!");
+      navigate("/dashboard/worker");
+
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        if (err.response?.data?.requires_payment) {
+          message.warning(err.response.data.error || "Please verify your account to continue.");
+          navigate("/payment/verify", {
+            state: {
+              payment_token: err.response.data.payment_token,
+              amount: err.response.data.amount,
+              phone: err.response.data.phone,
+              email: err.response.data.email,
+              name: err.response.data.name,
+            },
+          });
+          return;
+        } else if (err.response?.data?.requires_payment === false) {
+          // Under review + expired = blocked
+          setError(err.response.data.error || "Your account is still under review. Please wait for admin approval.");
+          message.error(err.response.data.error || "Your account is still under review.");
+          return;
+        } else {
+          setError(err.response.data.error || "Your account access is currently restricted.");
+          return;
+        }
+      }
+      // Fallback for 400s or 401s
+      setError(err.response?.data?.error || err.response?.data?.detail || "Invalid phone number or password.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   return (
@@ -134,7 +172,7 @@ function WorkerLogin() {
 
             <div className="text-sm">
               <button
-                 onClick={() => navigate('/forgot-password') }
+                onClick={() => navigate('/forgot-password')}
                 type="button"
                 className="font-medium text-blue-600 hover:text-orange-500"
               >
@@ -147,11 +185,10 @@ function WorkerLogin() {
             <button
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white transition-colors shadow-md ${
-                loading
-                  ? "bg-orange-400 cursor-not-allowed"
-                  : "bg-orange-600 hover:bg-orange-700"
-              }`}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white transition-colors shadow-md ${loading
+                ? "bg-orange-400 cursor-not-allowed"
+                : "bg-orange-600 hover:bg-orange-700"
+                }`}
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>

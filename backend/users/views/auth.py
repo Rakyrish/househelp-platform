@@ -8,6 +8,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
+import logging
 
 from rest_framework import generics, status, filters as drf_filters
 from rest_framework.response import Response
@@ -22,11 +23,14 @@ from ..serializers import (
     LoginWorkerSerializer, LoginEmployerSerializer,
 )
 
+
 # Import your custom CSRF-exempt class
 # Ensure authentication.py is in the same folder as this file
 from ..authentication import CsrfExemptSessionAuthentication
+from django.core.cache import cache
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 def rotate_token(user):
     """
@@ -34,6 +38,26 @@ def rotate_token(user):
     """
     Token.objects.filter(user=user).delete()
     return Token.objects.create(user=user)
+
+
+def get_fresh_user(user):
+    """
+    Always reload auth decisions from the latest database state.
+    """
+    return User.objects.get(pk=user.pk)
+
+
+def build_worker_login_response(user):
+    token = rotate_token(user)
+    return Response({
+        "message": "Login successful",
+        "token": token.key,
+        "role": user.role,
+        "name": f"{user.first_name} {user.last_name}".strip(),
+        "verification_status": user.verification_status,
+        "payment_submitted_at": user.payment_submitted_at.isoformat() if user.payment_submitted_at else None,
+        "redirect": "/dashboard/worker"
+    }, status=status.HTTP_200_OK)
 
 # -----------------------------------------------------------
 # AUTHENTICATION & REGISTRATION
@@ -48,14 +72,38 @@ class RegisterWorkerView(generics.CreateAPIView):
     authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        # Format phone number correctly (convert 07.. to 2547..)
+        data = request.data.copy()
+        phone = data.get('phone')
+        if phone:
+            phone_str = str(phone).strip().lstrip('+')
+            if phone_str.startswith('0'):
+                phone_str = '254' + phone_str[1:]
+            elif not phone_str.startswith('254'):
+                phone_str = '254' + phone_str
+            data['phone'] = phone_str
+
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             user = serializer.save()
+            
+            import uuid
+            payment_token = str(uuid.uuid4())
+            cache.set(f"pay_token:{payment_token}", user.id, timeout=86400)
+            
             return Response({
                 "message": "Worker account created successfully.",
-                "user": {"email": user.email, "role": user.role}
+                "user": {"email": user.email, "role": user.role},
+                "payment_token": payment_token
             }, status=status.HTTP_201_CREATED)
+            
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
 
 class RegisterEmployerView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -81,15 +129,46 @@ class WorkerLoginView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.validated_data
-            token = rotate_token(user)
+            user = get_fresh_user(serializer.validated_data)
+
+            logger.info("Worker login status check for user %s: %s", user.pk, user.verification_status)
+
+            # --- verified: always allow login ---
+            if user.verification_status == 'verified':
+                return build_worker_login_response(user)
+
+            # --- under_review: allow only while timed access remains ---
+            if user.verification_status == 'under_review':
+                if user.has_timed_access:
+                    return build_worker_login_response(user)
+
+                return Response({
+                    "error": "Your account is still under review. Please wait for admin approval.",
+                    "requires_payment": False,
+                }, status=status.HTTP_403_FORBIDDEN)
+
+            # --- unpaid / rejected: redirect to payment ---
+            if user.verification_status in ['unpaid', 'rejected']:
+                import uuid
+                payment_token = str(uuid.uuid4())
+                cache.set(f"pay_token:{payment_token}", user.id, timeout=86400)
+                
+                error_msg = "Please verify your account to continue." if user.verification_status == 'unpaid' else "Your payment could not be verified. Please try again."
+                
+                return Response({
+                    "error": error_msg,
+                    "requires_payment": True,
+                    "payment_token": payment_token,
+                    "amount": 99,
+                    "phone": user.phone,
+                    "name": f"{user.first_name} {user.last_name}",
+                    "email": user.email
+                }, status=status.HTTP_403_FORBIDDEN)
+
             return Response({
-                "message": "Login successful",
-                "token": token.key,
-                "role": user.role,
-                "name": f"{user.first_name} {user.last_name}",
-                "redirect": "/dashboard/worker"
-            }, status=status.HTTP_200_OK)
+                "error": "Your account access is currently restricted.",
+                "requires_payment": False,
+            }, status=status.HTTP_403_FORBIDDEN)
         return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
 class EmployerLoginView(generics.GenericAPIView):

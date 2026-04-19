@@ -1,10 +1,29 @@
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from 'react';
+import api from '../api/axios';
 
 const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, token } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = async () => {
+    if (!token) return;
+    try {
+      const res = await api.get('/admin/notifications/');
+      setUnreadCount(res.data.length);
+    } catch (err) {
+      console.error("Failed to fetch admin notifications:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [token]);
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + '/');
@@ -12,6 +31,12 @@ const AdminLayout = () => {
   const menuItems = [
     { name: 'Overview', path: '/admin', icon: '📊' },
     { name: 'User Management', path: '/admin/users', icon: '👥' },
+    { 
+      name: 'Payment Verification', 
+      path: '/admin/payments', 
+      icon: '💳',
+      badge: unreadCount > 0 ? unreadCount : null
+    },
   ];
 
   const handleLogout = () => {
@@ -36,14 +61,21 @@ const AdminLayout = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-xl ${
+              className={`flex items-center justify-between px-4 py-3 rounded-xl ${
                 isActive(item.path)
                   ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
                   : 'hover:bg-white/5 text-slate-400'
               }`}
             >
-              <span>{item.icon}</span>
-              <span className="text-sm font-semibold">{item.name}</span>
+              <div className="flex items-center space-x-3">
+                <span>{item.icon}</span>
+                <span className="text-sm font-semibold">{item.name}</span>
+              </div>
+              {item.badge && (
+                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>

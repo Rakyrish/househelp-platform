@@ -27,16 +27,31 @@ class WorkerDashboardViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def profile_status(self, request):
-        user = request.user
+        user = User.objects.get(pk=request.user.pk)
         if user.role != 'worker':
             return Response({"error": "Not a worker"}, status=403)
+        
+        # --- CRITICAL: DRF-level expiry check ---
+        if user.verification_status == 'under_review':
+            if not user.has_timed_access:
+                from rest_framework.authtoken.models import Token
+                Token.objects.filter(user=user).delete()
+                return Response({
+                    "error": "Session expired",
+                    "detail": "Your session has expired. Account still under review.",
+                    "code": "temporary_access_expired"
+                }, status=401)
         
         latest_log = VerificationLog.objects.filter(worker=user).order_by('-created_at').first()
         
         data = {
             "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": user.role,
             "status": user.status, 
             "is_verified": user.is_verified,
+            "verification_status": user.verification_status,
+            "payment_submitted_at": user.payment_submitted_at.isoformat() if user.payment_submitted_at else None,
             "experience": user.experience,
             "worker_type": user.worker_type,
             "location": user.location,

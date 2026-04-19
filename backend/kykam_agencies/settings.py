@@ -9,6 +9,48 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": { "CLIENT_CLASS": "django_redis.client.DefaultClient" }
+    }
+}
+
+MPESA_CONSUMER_KEY    = os.getenv("MPESA_CONSUMER_KEY")
+MPESA_CONSUMER_SECRET = os.getenv("MPESA_CONSUMER_SECRET")
+MPESA_SHORTCODE       = os.getenv("MPESA_SHORTCODE", "174379")
+MPESA_PASSKEY         = os.getenv("MPESA_PASSKEY")
+MPESA_CALLBACK_URL    = os.getenv("MPESA_CALLBACK_URL")
+MPESA_ENV             = os.getenv("MPESA_ENV", "sandbox")
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'mpesa': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
 # Ensure DEBUG is strictly False in production
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
@@ -24,6 +66,8 @@ ALLOWED_HOSTS = [
     "102.212.247.246",
     'www.lucacare.co.ke',
     'lucacare.co.ke',
+    '18db-197-136-183-18.ngrok-free.app',
+    '4247-2c0f-2d80-302-1800-e0fe-903e-d78a-8286.ngrok-free.app',
 ]
 
 # ✅ FIX: Must be True to allow CSRF and Session cookies to be sent back and forth
@@ -58,6 +102,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'users.middleware.TemporaryAccessAutoExpiryMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -162,5 +207,6 @@ if not DEBUG:
 EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+ADMIN_NOTIFICATION_EMAIL = os.getenv("ADMIN_NOTIFICATION_EMAIL") or "Kykamagency1@gmail.com"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

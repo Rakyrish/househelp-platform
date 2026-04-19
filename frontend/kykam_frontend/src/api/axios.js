@@ -22,15 +22,41 @@ api.interceptors.response.use(
         const url = error.config?.url || '';
         const isLoginRequest = url.includes('/login/');
 
+        // Specific check for temporary access expiration (backend returns 401)
+        if (error.response && (error.response.status === 401 || error.response.status === 403) && error.response.data?.code === 'temporary_access_expired') {
+            console.warn('Temporary access expired - forcing logout');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.replace('/login/worker?expired=true');
+            return Promise.reject(error);
+        }
+
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
             // ONLY redirect if it's NOT a login attempt
             if (!isLoginRequest) {
                 console.warn("Session expired or CSRF mismatch. Logging out...");
+                const storedUser = localStorage.getItem('user');
+                let role = null;
+                try {
+                    if (storedUser) {
+                        const parsedUser = JSON.parse(storedUser);
+                        role = parsedUser?.role;
+                    }
+                } catch (e) {}
+
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 
                 // Use replace to avoid back-button loops
-                window.location.replace('/'); 
+                if (role === 'worker') {
+                    window.location.replace('/login/worker');
+                } else if (role === 'employer') {
+                    window.location.replace('/login/employer');
+                } else if (role === 'admin') {
+                    window.location.replace('/admin/login');
+                } else {
+                    window.location.replace('/');
+                }
             }
         }
         return Promise.reject(error);

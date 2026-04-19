@@ -29,10 +29,12 @@ import WorkerDirectory from "./pages/Dashboard/WorkerDirectory";
 import AdminDashboard from "./pages/admin/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import VerificationPage from "./pages/admin/Verification";
+import PaymentReview from "./pages/admin/PaymentReview";
 
 // Context & Protection
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PaymentVerification from "./pages/payment/PaymentVerification";
 
 // API Instance (Your fixed axios instance withCredentials: true)
 import api from "./api/axios";
@@ -111,6 +113,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="verify/:userId" element={<VerificationPage />} />
+            <Route path="payments" element={<PaymentReview />} />
           </Route>
 
           {/* --- 3. PUBLIC & CLIENT SECTION (Uses Header/Footer) --- */}
@@ -127,7 +130,8 @@ function App() {
                     <Route path="/services" element={<Services />} />
                     <Route path="/why-kykam" element={<Why />} />
                     <Route path="/contact" element={<ContactUs />} />
-                    
+                    <Route path="/payment/verify" element={<PaymentVerification />} />
+
                     {/* Auth Routes */}
                     <Route path="/login/worker" element={<WorkerLogin />} />
                     <Route path="/login/employer" element={<EmployerLogin />} />

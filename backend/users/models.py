@@ -86,8 +86,34 @@ class User(AbstractUser):
     home_address_description = models.TextField(help_text="Directions", null=True, blank=True)
     is_verified = models.BooleanField(default=False)
 
+    # --- LEGAL CONSENT TRACKING ---
+    accepted_terms = models.BooleanField(default=False)
+    accepted_terms_at = models.DateTimeField(null=True, blank=True)
+    terms_version = models.CharField(max_length=20, default='v1.0')
+
+    # --- VERIFICATION STATUS ---
+    VERIFICATION_STATUS_CHOICES = (
+        ('unpaid', 'Unpaid'),
+        ('under_review', 'Under Review'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected'),
+    )
+    verification_status = models.CharField(max_length=20, choices=VERIFICATION_STATUS_CHOICES, default='unpaid')
+    payment_submitted_at = models.DateTimeField(null=True, blank=True)
+
     groups = models.ManyToManyField(Group, related_name='custom_users', blank=True)
     user_permissions = models.ManyToManyField(Permission, related_name='custom_users_permissions', blank=True)
+
+    @property
+    def has_timed_access(self):
+        """Returns True if user is under_review AND within the 1-minute access window."""
+        if self.verification_status != 'under_review':
+            return False
+        if not self.payment_submitted_at:
+            return False
+        from django.utils import timezone
+        from datetime import timedelta
+        return timezone.now() <= self.payment_submitted_at + timedelta(minutes=1)
 
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -161,3 +187,91 @@ class PlatformSetting(models.Model):
 
     def __str__(self):
         return "Global Platform Configuration"
+class PaymentTransaction(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        SUCCESS = 'SUCCESS', 'Success'
+        FAILED = 'FAILED', 'Failed'
+        CANCELLED = 'CANCELLED', 'Cancelled'
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='payments')
+    phone_number = models.CharField(max_length=15, help_text="Format: 2547XXXXXXXX")
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # M-Pesa Identifiers
+    transaction_id = models.CharField(max_length=50, blank=True, null=True, unique=True, help_text="M-Pesa Receipt Number")
+    checkout_request_id = models.CharField(max_length=100, unique=True, help_text="Unique ID for STK Push request")
+    merchant_request_id = models.CharField(max_length=100, blank=True, null=True)
+    
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    reference = models.CharField(max_length=100, help_text="What the payment is for, e.g., 'Account Activation'")
+    
+    # Audit Trail
+    raw_callback_data = models.JSONField(blank=True, null=True, help_text="Full JSON payload from M-Pesa")
+    result_desc = models.TextField(blank=True, null=True, help_text="Description of the result/error from M-Pesa")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['checkout_request_id']),
+            models.Index(fields=['transaction_id']),
+            models.Index(fields=['phone_number']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"{self.user} - {self.phone_number} - {self.amount} ({self.status})"
+
+
+class ManualPaymentSubmission(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending_verification', 'Pending Verification'
+        APPROVED = 'approved', 'Approved'
+        REJECTED = 'rejected', 'Rejected'
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='manual_payments'
+    )
+    phone_number = models.CharField(max_length=20, help_text="Phone number used to make the M-Pesa payment")
+    mpesa_transaction_code = models.CharField(
+        max_length=20, unique=True, help_text="M-Pesa transaction/receipt code e.g. SLK4H7R2T0"
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=99)
+    status = models.CharField(
+        max_length=25, choices=Status.choices, default=Status.PENDING
+    )
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='reviewed_payments'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['mpesa_transaction_code']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"{self.user} - {self.mpesa_transaction_code} ({self.status})"
+
+
+class AdminNotification(models.Model):
+    notification_type = models.CharField(max_length=50)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    related_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.notification_type}] {self.message[:50]}..."

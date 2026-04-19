@@ -19,11 +19,11 @@ const Home = () => {
           backgroundPosition: "center",
         }}
       >
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-5 max-w-[900px] leading-tight">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-5 max-w-[900px] leading-tight px-2">
           Empowering Homes Across <span className="text-[#f3a82f]">Kenya</span>.
         </h1>
 
-        <p className="text-lg md:text-xl text-[#fff font-bold lg:text-2xl mb-10 max-w-[800px] opacity-90 leading-relaxed">
+        <p className="text-base sm:text-lg md:text-xl text-white font-bold lg:text-2xl mb-10 max-w-[800px] opacity-90 leading-relaxed px-4">
           Connecting families from the 47 counties with verified, professional househelps. 
           Your safety is our priority, from Nairobi to the furthest corner of Kenya.
         </p>

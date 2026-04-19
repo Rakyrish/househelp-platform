@@ -2,19 +2,8 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer style={{ 
-      padding: "60px 20px", 
-      backgroundColor: "#0f172a", 
-      color: "#94a3b8", 
-      borderTop: "4px solid #f3a82f" // Kykam Brand Color Accent
-    }}>
-      <div style={{ 
-        maxWidth: "1200px", 
-        margin: "0 auto", 
-        display: "grid", 
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
-        gap: "40px" 
-      }}>
+    <footer className="bg-slate-900 text-slate-400 border-t-4 border-amber-500 py-10 px-4 md:py-16 md:px-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
         
         {/* Column 1: Brand Identity */}
         <div style={{ flex: 1 }}>

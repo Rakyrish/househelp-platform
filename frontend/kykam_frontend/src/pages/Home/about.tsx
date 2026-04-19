@@ -1,53 +1,25 @@
-import React from 'react';
-
 function About() {
-  const sectionStyle = {
-    padding: "100px 20px",
-    fontFamily: "'Inter', sans-serif",
-    backgroundColor: "#ffffff",
-  } as React.CSSProperties;
-
   return (
-    <section style={sectionStyle}>
-      <div style={{ 
-        maxWidth: "1100px", 
-        margin: "0 auto", 
-        display: "flex", 
-        flexWrap: "wrap", 
-        alignItems: "stretch", // Ensures both sides are equal height
-        gap: "50px", 
-        textAlign: "left" 
-      }}>
+    <section className="font-sans bg-white py-16 px-6 md:py-24 md:px-12">
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-stretch gap-10 lg:gap-16 text-left">
         
         {/* The Story Side */}
-        <div style={{ flex: "1 1 500px" }}>
-          <span style={{ 
-            color: "#f3a82f", 
-            fontWeight: "bold", 
-            textTransform: "uppercase", 
-            letterSpacing: "1px", 
-            fontSize: "14px" 
-          }}>
+        <div className="flex-1 w-full lg:w-3/5">
+          <span className="text-[#f3a82f] font-bold uppercase tracking-wider text-sm">
             Our Story
           </span>
-          <h2 style={{ 
-            fontSize: "42px", 
-            color: "#0f172a", 
-            marginTop: "10px", 
-            marginBottom: "25px", 
-            fontWeight: "800" 
-          }}>
-            About <span style={{ color: "#f3a82f" }}>Kykam</span>
+          <h2 className="text-3xl md:text-5xl text-slate-900 mt-2 mb-6 font-extrabold">
+            About <span className="text-[#f3a82f]">Kykam</span>
           </h2>
           
-          <p style={{ fontSize: "18px", color: "#475569", lineHeight: "1.8", marginBottom: "20px" }}>
-            Kykam was born out of a simple need: <strong style={{ color: "#0f172a" }}>Trust</strong>. 
+          <p className="text-base md:text-lg text-slate-600 leading-relaxed mb-6">
+            Kykam was born out of a simple need: <strong className="text-slate-900">Trust</strong>. 
             In Kenya, finding reliable domestic help often relies on informal word-of-mouth, 
             which can be unpredictable and risky for both employers and workers.
           </p>
           
-          <p style={{ fontSize: "18px", color: "#475569", lineHeight: "1.8" }}>
-            Our mission is to <strong style={{ color: "#0f172a" }}>formalize</strong> the domestic work 
+          <p className="text-base md:text-lg text-slate-600 leading-relaxed">
+            Our mission is to <strong className="text-slate-900">formalize</strong> the domestic work 
             industry in Kenya. We provide a professional bridge where integrity meets opportunity. 
             By verifying every profile, we ensure domestic workers find dignified, safe environments, 
             and Kenyan families find the peace of mind they deserve.
@@ -55,38 +27,16 @@ function About() {
         </div>
 
         {/* The Vision Side */}
-        <div style={{ 
-          flex: "1 1 350px", 
-          backgroundColor: "#f3a82f", 
-          padding: "50px", 
-          borderRadius: "24px", 
-          color: "#0f172a", // Darker text on yellow is easier to read
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          boxShadow: "0 20px 40px -15px rgba(243, 168, 47, 0.4)"
-        }}>
-          <h4 style={{ 
-            fontSize: "28px", 
-            marginBottom: "20px", 
-            fontWeight: "800",
-            borderBottom: "2px solid rgba(15, 23, 42, 0.1)",
-            paddingBottom: "10px",
-            display: "inline-block"
-          }}>
+        <div className="flex-1 w-full lg:w-2/5 bg-[#f3a82f] p-8 md:p-12 rounded-3xl text-slate-900 flex flex-col justify-center shadow-2xl shadow-orange-500/30">
+          <h4 className="text-2xl md:text-3xl font-extrabold mb-6 border-b-2 border-slate-900/10 pb-3 inline-block">
             Our Vision
           </h4>
-          <p style={{ 
-            fontSize: "18px", 
-            lineHeight: "1.6", 
-            fontWeight: "500",
-            fontStyle: "italic" 
-          }}>
+          <p className="text-base md:text-xl leading-relaxed font-medium italic">
             "To become Kenya's most trusted partner in household management, 
             fostering a culture of respect, safety, and security for every home 
             and worker across all 47 counties."
           </p>
-          <div style={{ marginTop: "30px", fontSize: "40px", opacity: "0.2" }}>
+          <div className="mt-8 text-5xl opacity-20">
             🇰🇪
           </div>
         </div>

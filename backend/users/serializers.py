@@ -16,8 +16,19 @@ class RegisterWorkerSerializer(serializers.ModelSerializer):
         fields = [
             'full_name', 'password', 'email', 'phone', 'location', 'age',
             'id_number', 'id_photo_front', 'id_photo_back', 'passport_img', 
-            'kin_name', 'kin_phone', 'kin_relationship', 'gender', 'experience', 'expected_salary'
+            'kin_name', 'kin_phone', 'kin_relationship', 'gender', 'experience', 'expected_salary',
+            'accepted_terms'
         ]
+
+    def validate_accepted_terms(self, value):
+        if not value:
+            raise serializers.ValidationError("You must agree to the Terms and Conditions to continue.")
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(username=value).exists() or User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
     def create(self, validated_data):
         full_name = validated_data.pop('full_name', '')
@@ -27,11 +38,14 @@ class RegisterWorkerSerializer(serializers.ModelSerializer):
         first_name = name_parts[0]
         last_name = name_parts[1] if len(name_parts) > 1 else ''
 
+        from django.utils import timezone
         user = User.objects.create_user(
             username=email,
             first_name=first_name,
             last_name=last_name,
             role='worker',
+            accepted_terms_at=timezone.now(),
+            terms_version='v1.0',
             **validated_data
         )
         return user
@@ -45,7 +59,17 @@ class RegisterEmployerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['full_name', 'password', 'email', 'phone', 'location', 'family_size', 'worker_type', 'salary', 'requirements', 'start_date', 'accommodation', 'id_number' ]
+        fields = ['full_name', 'password', 'email', 'phone', 'location', 'family_size', 'worker_type', 'salary', 'requirements', 'start_date', 'accommodation', 'id_number', 'accepted_terms']
+
+    def validate_accepted_terms(self, value):
+        if not value:
+            raise serializers.ValidationError("You must agree to the Terms and Conditions to continue.")
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(username=value).exists() or User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
     def create(self, validated_data):
         full_name = validated_data.pop('full_name', '')
@@ -55,12 +79,15 @@ class RegisterEmployerSerializer(serializers.ModelSerializer):
         first_name = name_parts[0]
         last_name = name_parts[1] if len(name_parts) > 1 else ''
 
+        from django.utils import timezone
         user = User.objects.create_user(
             username=email,  # <--- Added this line
             first_name=first_name,
             last_name=last_name,
             role='employer',
             is_verified=True,
+            accepted_terms_at=timezone.now(),
+            terms_version='v1.0',
             **validated_data
         )
         return user
@@ -164,7 +191,7 @@ class WorkerSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'first_name', 'last_name', 'worker_type', 'location', 
             'experience', 'expected_salary', 'passport_img', 'is_verified', 
-            'status', 'my_request_status', 'phone', 'age', 'is_available', 'current_employer',  'start_date','requirements'
+            'verification_status', 'status', 'my_request_status', 'phone', 'age', 'is_available', 'current_employer',  'start_date','requirements'
         ]
 
     def get_my_request_status(self, obj):
@@ -224,10 +251,52 @@ class AdminUserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 'phone', 
-            'role', 'status', 'is_verified', 'id_number', 'family_size', 
+            'role', 'status', 'is_verified', 'verification_status', 'id_number', 'family_size', 
             'id_photo_front', 'id_photo_back', 'location', 'age',
             'kin_name', 'kin_phone', 'worker_type', 'worker_type_display', 
             'date_joined', 'passport_img', 'expected_salary', 'salary', 
             'requirements', 'accommodation'
         ]
+
+import re
+from .models import ManualPaymentSubmission
+
+class ManualPaymentSubmitSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(max_length=20)
+    mpesa_transaction_code = serializers.CharField(max_length=20)
+
+    def validate_phone_number(self, value):
+        cleaned = re.sub(r'\D', '', value)
+        if cleaned.startswith('0'):
+            cleaned = '254' + cleaned[1:]
+        elif cleaned.startswith('+254'):
+            cleaned = cleaned[1:]
+        if not cleaned.startswith('254') or len(cleaned) != 12:
+            raise serializers.ValidationError("Invalid phone number. Use format 07XXXXXXXX or 2547XXXXXXXX.")
+        return cleaned
+
+    def validate_mpesa_transaction_code(self, value):
+        value = value.strip().upper()
+        if len(value) < 8 or len(value) > 15:
+            raise serializers.ValidationError("Invalid M-Pesa transaction code.")
+        if ManualPaymentSubmission.objects.filter(mpesa_transaction_code=value).exists():
+            raise serializers.ValidationError("This transaction code has already been submitted.")
+        return value
+
+
+class ManualPaymentListSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    user_email = serializers.CharField(source='user.email', read_only=True)
+
+    class Meta:
+        model = ManualPaymentSubmission
+        fields = [
+            'id', 'user_name', 'user_email', 'phone_number',
+            'mpesa_transaction_code', 'amount', 'status',
+            'created_at', 'reviewed_at'
+        ]
+
+    def get_user_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}"
+
 

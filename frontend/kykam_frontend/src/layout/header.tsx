@@ -24,7 +24,7 @@ const Header = () => {
 
   const PRIMARY_COLOR = "#f3a82f";
   const DARK_BG = "#1e293b";
- 
+
   const loginRef = useRef<HTMLDivElement>(null);
   const registerRef = useRef<HTMLDivElement>(null);
 
@@ -80,6 +80,92 @@ const Header = () => {
     </a>
   );
 
+  const renderAuthButtons = (isMobile: boolean = false) => (
+    <div className={`flex ${isMobile ? 'flex-row' : 'flex-col md:flex-row'} items-center gap-${isMobile ? '3' : '6'}`}>
+      {/* Login Dropdown */}
+      <div className="relative" ref={isMobile ? null : loginRef}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenLogin(!openLogin);
+            setOpenRegister(false);
+          }}
+          className={`text-white hover:text-[#f3a82f] font-semibold flex items-center gap-${isMobile ? '1' : '2'} transition-colors ${isMobile ? 'text-sm' : ''}`}
+        >
+          Login{" "}
+          <CaretDownOutlined
+            className={`transition-transform ${openLogin ? "rotate-180" : ""} ${isMobile ? 'text-[10px]' : 'text-xs'}`}
+          />
+        </button>
+        {openLogin && (
+          <div className={`absolute top-full ${isMobile ? 'right-0' : 'right-0 md:left-0'} mt-4 w-48 bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2`}>
+            <button
+              onClick={() => {
+                navigate("/login/employer");
+                setOpenLogin(false);
+                setIsMenuOpen(false);
+              }}
+              className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#f3a82f] transition-colors"
+            >
+              As Employer
+            </button>
+            <div className="border-t border-gray-100" />
+            <button
+              onClick={() => {
+                navigate("/login/worker");
+                setOpenLogin(false);
+                setIsMenuOpen(false);
+              }}
+              className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#f3a82f] transition-colors"
+            >
+              As Worker
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Register Button */}
+      <div className="relative" ref={isMobile ? null : registerRef}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenRegister(!openRegister);
+            setOpenLogin(false);
+          }}
+          className={`rounded-full font-bold shadow-lg transform active:scale-95 transition-all hover:brightness-110 flex items-center justify-center ${isMobile ? 'px-4 py-1.5 text-xs' : 'px-6 py-2.5'}`}
+          style={{ backgroundColor: PRIMARY_COLOR, color: DARK_BG }}
+        >
+          Register <CaretDownOutlined className={`${isMobile ? 'text-[10px]' : 'text-xs'} ml-1`} />
+        </button>
+        {openRegister && (
+          <div className="absolute top-full right-0 mt-4 w-48 bg-white rounded-xl shadow-2xl overflow-hidden">
+            <button
+              onClick={() => {
+                navigate("/register/employer");
+                setOpenRegister(false);
+                setIsMenuOpen(false);
+              }}
+              className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
+            >
+              As Employer
+            </button>
+            <div className="border-t border-gray-100" />
+            <button
+              onClick={() => {
+                navigate("/register/worker");
+                setOpenRegister(false);
+                setIsMenuOpen(false);
+              }}
+              className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
+            >
+              As Worker
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <header
       className="sticky top-0 z-50 mb-0.5 w-full px-4 md:px-10 h-[70px] flex items-center justify-between shadow-xl"
@@ -107,45 +193,52 @@ const Header = () => {
           >
             KYKAM
           </h1>
-          <span className="text-white text-[10px] uppercase tracking-widest font-light opacity-80">
+          <span className="text-white text-[10px] uppercase tracking-widest font-light opacity-80 md:block hidden">
             Househelp Connect
           </span>
         </div>
       </div>
 
-      {/* Mobile Toggle */}
-      <button
-        className="md:hidden text-white p-2 hover:bg-gray-800 rounded-lg transition-colors"
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-      >
-        {isMenuOpen ? (
-          <CloseOutlined className="text-xl" />
+      {/* Mobile Right Section */}
+      <div className="md:hidden">
+        {user ? (
+          <button
+            className="text-white p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? (
+              <CloseOutlined className="text-xl" />
+            ) : (
+              <MenuOutlined className="text-xl" />
+            )}
+          </button>
         ) : (
-          <MenuOutlined className="text-xl" />
+          renderAuthButtons(true)
         )}
-      </button>
+      </div>
 
       {/* Backdrop for Mobile */}
-      {isMenuOpen && (
+      {isMenuOpen && user && (
         <div
           className="fixed inset-0 bg-black/50 md:hidden"
           onClick={() => setIsMenuOpen(false)}
         />
       )}
 
-      {/* Navigation Menu */}
+      {/* Navigation Menu (Hidden on mobile if not logged in since there is no hamburger trigger) */}
       <nav
-        className={`
-        fixed md:static top-0 right-0 h-[60%] md:h-auto w-[60%] md:w-auto
-        flex flex-col md:flex-row items-center gap-8 md:gap-8
-        p-12 md:p-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
-        ${isMenuOpen ? "translate-x-0 bg-[#1e293b]" : "translate-x-full md:translate-x-0 bg-transparent"}
-        z-50
+        className={` 
+        ${!user ? 'hidden md:flex' : isMenuOpen ? "flex translate-x-0" : "hidden md:flex md:translate-x-0"}
+        fixed md:static top-0 right-0 h-[100dvh] md:h-auto w-3/4 sm:w-1/2 md:w-auto
+        flex-col md:flex-row items-center gap-6 md:gap-8
+        pt-20 pb-10 px-8 md:p-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
+        ${isMenuOpen ? "bg-[#1e293b]" : "bg-transparent"}
+        z-50 overflow-y-auto md:overflow-visible
       `}
       >
         {/* Mobile-only Close Header */}
         <div
-          className="md:hidden absolute top-5 right-5 text-white"
+          className="md:hidden absolute top-5 right-5 text-white cursor-pointer"
           onClick={() => setIsMenuOpen(false)}
         >
           <CloseOutlined className="text-xl" />
@@ -155,119 +248,38 @@ const Header = () => {
         <NavLink href="/about">About</NavLink>
 
         {!user ? (
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            {/* Login Dropdown */}
-            <div className="relative" ref={loginRef}>
-              <button
-                onClick={() => {
-                  setOpenLogin(!openLogin);
-                  setOpenRegister(false);
-        
-                }}
-                className="text-white hover:text-[#f3a82f] font-semibold flex items-center gap-2 transition-colors"
-              >
-                Login{" "}
-                <CaretDownOutlined
-                  className={`text-xs transition-transform ${openLogin ? "rotate-180" : ""}`}
-                />
-              </button>
-              {openLogin && (
-                <div className="absolute top-full right-0 md:left-0 mt-4 w-48 bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
-                  <button
-                    onClick={() => {
-                      navigate("/login/employer");
-                      setOpenLogin(false);
-                      setIsMenuOpen(false)
-                    }}
-                    className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#f3a82f] transition-colors"
-                  >
-                    As Employer
-                  </button>
-                  <div className="border-t border-gray-100" />
-                  <button
-                    onClick={() => {
-                      navigate("/login/worker");
-                      setOpenLogin(false);
-                      setIsMenuOpen(false)
-                    }}
-                    className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#f3a82f] transition-colors"
-                  >
-                    As Worker
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Register Button */}
-            <div className="relative" ref={registerRef}>
-              <button
-                onClick={() => {
-                  setOpenRegister(!openRegister);
-                  setOpenLogin(false);
-                }}
-                className="px-6 py-2.5 rounded-full font-bold shadow-lg transform active:scale-95 transition-all hover:brightness-110"
-                style={{ backgroundColor: PRIMARY_COLOR, color: DARK_BG }}
-              >
-                Register <CaretDownOutlined className="text-xs ml-1" />
-              </button>
-              {openRegister && (
-                <div className="absolute top-full right-0 mt-4 w-48 bg-white rounded-xl shadow-2xl overflow-hidden">
-                  <button
-                    onClick={() => {
-                      navigate("/register/employer");
-                      setOpenRegister(false);
-                      setIsMenuOpen(false)
-                    }}
-                    className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
-                  >
-                    As Employer
-                  </button>
-                  <div className="border-t border-gray-100" />
-                  <button
-                    onClick={() => {
-                      navigate("/register/worker");
-                      setOpenRegister(false);
-                      setIsMenuOpen(false)
-                    }}
-                    className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
-                  >
-                    As Worker
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+          renderAuthButtons(false)
         ) : (
           /* Logged In UI */
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="h-px w-10 bg-gray-600 md:h-8 md:w-px" />
 
             <div className="flex items-center gap-4">
-              {user.role === "worker" && 
-              <Popover
-                content={notificationContent}
-                title={<span className="font-bold">Notifications</span>}
-                trigger="click"
-                placement="bottomRight"
-              >
-                <Badge
-                  count={notifications.length}
-                  offset={[-2, 5]}
-                  size="small"
-                  color="#f3a82f"
+              {user.role === "worker" &&
+                <Popover
+                  content={notificationContent}
+                  title={<span className="font-bold">Notifications</span>}
+                  trigger="click"
+                  placement="bottomRight"
                 >
-                  <BellOutlined className="text-2xl text-white cursor-pointer hover:text-[#f3a82f] transition-colors" />
-                </Badge>
-              </Popover>
+                  <Badge
+                    count={notifications.length}
+                    offset={[-2, 5]}
+                    size="small"
+                    color="#f3a82f"
+                  >
+                    <BellOutlined className="text-2xl text-white cursor-pointer hover:text-[#f3a82f] transition-colors" />
+                  </Badge>
+                </Popover>
               }
-              
+
 
               <div className="flex flex-row items-end gap-1 whitespace-nowrap flex ">
                 <span className="text-gray-400 text-[11px] font-bold uppercase tracking-wider">
                   Welcome
                 </span>
                 <span className="text-white text-sm font-medium">
-                 {" "} {user.name}
+                  {" "} {user.name}
                 </span>
               </div>
             </div>

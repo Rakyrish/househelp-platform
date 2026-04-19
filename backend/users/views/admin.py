@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import  IsAdminUser,AllowAny, IsAuthenticated
 
-from ..models import VerificationLog, Booking, Category, PlatformSetting
+from ..models import VerificationLog, Booking, Category, PlatformSetting, AdminNotification
 from ..serializers import (
  AdminUserDetailSerializer,CategorySerializer,PlatformSettingsSerializer
 )
@@ -60,16 +60,19 @@ class AdminUserManagementViewSet(viewsets.ModelViewSet):
     def approve_worker(self, request, pk=None):
         user = self.get_object()
         user.is_verified, user.status, user.is_active = True, 'approved', True
-        user.save()
+        user.verification_status = 'verified'
+        user.payment_submitted_at = None
+        user.save(update_fields=['is_verified', 'status', 'is_active', 'verification_status', 'payment_submitted_at'])
         VerificationLog.objects.create(worker=user, admin=request.user, action='approved')
         send_verification_email(user, 'approved')
-        return Response({'status': 'User approved'})
+        return Response({'status': 'User approved', 'verification_status': user.verification_status})
 
     @action(detail=True, methods=['post'])
     def reject_worker(self, request, pk=None):
         user = self.get_object()
         reasons, comment = request.data.get('reasons', []), request.data.get('comment', '')
         user.status, user.is_verified = 'rejected', False
+        user.verification_status = 'rejected'
         user.save()
         VerificationLog.objects.create(worker=user, admin=request.user, action='rejected', rejection_reasons=reasons, comment=comment)
         send_verification_email(user, 'rejected', reasons, comment)
@@ -291,3 +294,35 @@ class ContactUsView(APIView):
             return Response({"success": "Your message has been received. We will get back to you soon!"})
         except Exception as e:
             return Response({"error": "System busy. Please try again later."}, status=500)
+
+
+class AdminNotificationListView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+
+    def get(self, request):
+        notifications = AdminNotification.objects.filter(is_read=False).order_by('-created_at')[:50]
+        data = [
+            {
+                "id": n.id,
+                "notification_type": n.notification_type,
+                "message": n.message,
+                "created_at": n.created_at,
+                "related_user_id": n.related_user_id,
+            }
+            for n in notifications
+        ]
+        return Response(data)
+
+class AdminNotificationMarkReadView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+
+    def post(self, request, pk):
+        try:
+            notification = AdminNotification.objects.get(id=pk)
+            notification.is_read = True
+            notification.save()
+            return Response({"message": "Notification marked as read"})
+        except AdminNotification.DoesNotExist:
+            return Response({"error": "Notification not found"}, status=status.HTTP_404_NOT_FOUND)
