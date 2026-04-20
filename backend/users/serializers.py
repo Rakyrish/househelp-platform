@@ -206,7 +206,9 @@ class WorkerSerializer(serializers.ModelSerializer):
     def get_passport_img(self, obj):
         if obj.passport_img:
             request = self.context.get('request')
-            return request.build_absolute_uri(obj.passport_img.url)
+            if request:
+                return request.build_absolute_uri(obj.passport_img.url)
+            return obj.passport_img.url
         return None
     
 class CategorySerializer(serializers.ModelSerializer):

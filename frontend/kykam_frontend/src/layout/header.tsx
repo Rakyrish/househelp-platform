@@ -10,8 +10,11 @@ import {
 } from "@ant-design/icons";
 
 const Header = () => {
-  const [openLogin, setOpenLogin] = useState(false);
-  const [openRegister, setOpenRegister] = useState(false);
+  // FIX: separate open state for desktop vs mobile dropdowns
+  const [openLoginDesktop, setOpenLoginDesktop] = useState(false);
+  const [openRegisterDesktop, setOpenRegisterDesktop] = useState(false);
+  const [openLoginMobile, setOpenLoginMobile] = useState(false);
+  const [openRegisterMobile, setOpenRegisterMobile] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [notifications] = useState([
@@ -25,8 +28,11 @@ const Header = () => {
   const PRIMARY_COLOR = "#f3a82f";
   const DARK_BG = "#1e293b";
 
-  const loginRef = useRef<HTMLDivElement>(null);
-  const registerRef = useRef<HTMLDivElement>(null);
+  // FIX: separate refs for desktop and mobile
+  const loginDesktopRef = useRef<HTMLDivElement>(null);
+  const registerDesktopRef = useRef<HTMLDivElement>(null);
+  const loginMobileRef = useRef<HTMLDivElement>(null);
+  const registerMobileRef = useRef<HTMLDivElement>(null);
 
   const notificationContent = (
     <List
@@ -52,11 +58,20 @@ const Header = () => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
 
-      if (loginRef.current && !loginRef.current.contains(target)) {
-        setOpenLogin(false);
+      // Desktop click-outside
+      if (loginDesktopRef.current && !loginDesktopRef.current.contains(target)) {
+        setOpenLoginDesktop(false);
       }
-      if (registerRef.current && !registerRef.current.contains(target)) {
-        setOpenRegister(false);
+      if (registerDesktopRef.current && !registerDesktopRef.current.contains(target)) {
+        setOpenRegisterDesktop(false);
+      }
+
+      // Mobile click-outside
+      if (loginMobileRef.current && !loginMobileRef.current.contains(target)) {
+        setOpenLoginMobile(false);
+      }
+      if (registerMobileRef.current && !registerMobileRef.current.contains(target)) {
+        setOpenRegisterMobile(false);
       }
     };
 
@@ -66,12 +81,13 @@ const Header = () => {
 
   const handleLogout = () => {
     logout();
-    setOpenLogin(false);
+    setOpenLoginDesktop(false);
+    setOpenLoginMobile(false);
     setIsMenuOpen(false);
     navigate("/");
   };
 
-  const NavLink = ({ href, children }) => (
+  const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
     <a
       href={href}
       className="text-gray-100 hover:text-[#f3a82f] transition-all duration-300 font-medium text-lg md:text-base"
@@ -80,30 +96,30 @@ const Header = () => {
     </a>
   );
 
-  const renderAuthButtons = (isMobile: boolean = false) => (
-    <div className={`flex ${isMobile ? 'flex-row' : 'flex-col md:flex-row'} items-center gap-${isMobile ? '3' : '6'}`}>
-      {/* Login Dropdown */}
-      <div className="relative" ref={isMobile ? null : loginRef}>
+  // FIX: desktop auth buttons — use desktop state + refs
+  const renderDesktopAuthButtons = () => (
+    <div className="flex flex-col md:flex-row items-center gap-6">
+      {/* Login Dropdown — Desktop */}
+      <div className="relative" ref={loginDesktopRef}>
         <button
           onClick={(e) => {
             e.stopPropagation();
-            setOpenLogin(!openLogin);
-            setOpenRegister(false);
+            setOpenLoginDesktop((v) => !v);
+            setOpenRegisterDesktop(false);
           }}
-          className={`text-white hover:text-[#f3a82f] font-semibold flex items-center gap-${isMobile ? '1' : '2'} transition-colors ${isMobile ? 'text-sm' : ''}`}
+          className="text-white hover:text-[#f3a82f] font-semibold flex items-center gap-2 transition-colors"
         >
           Login{" "}
           <CaretDownOutlined
-            className={`transition-transform ${openLogin ? "rotate-180" : ""} ${isMobile ? 'text-[10px]' : 'text-xs'}`}
+            className={`transition-transform text-xs ${openLoginDesktop ? "rotate-180" : ""}`}
           />
         </button>
-        {openLogin && (
-          <div className={`absolute top-full ${isMobile ? 'right-0' : 'right-0 md:left-0'} mt-4 w-48 bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2`}>
+        {openLoginDesktop && (
+          <div className="absolute top-full left-0 mt-4 w-48 bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
             <button
               onClick={() => {
                 navigate("/login/employer");
-                setOpenLogin(false);
-                setIsMenuOpen(false);
+                setOpenLoginDesktop(false);
               }}
               className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#f3a82f] transition-colors"
             >
@@ -113,8 +129,7 @@ const Header = () => {
             <button
               onClick={() => {
                 navigate("/login/worker");
-                setOpenLogin(false);
-                setIsMenuOpen(false);
+                setOpenLoginDesktop(false);
               }}
               className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#f3a82f] transition-colors"
             >
@@ -124,26 +139,25 @@ const Header = () => {
         )}
       </div>
 
-      {/* Register Button */}
-      <div className="relative" ref={isMobile ? null : registerRef}>
+      {/* Register Dropdown — Desktop */}
+      <div className="relative" ref={registerDesktopRef}>
         <button
           onClick={(e) => {
             e.stopPropagation();
-            setOpenRegister(!openRegister);
-            setOpenLogin(false);
+            setOpenRegisterDesktop((v) => !v);
+            setOpenLoginDesktop(false);
           }}
-          className={`rounded-full font-bold shadow-lg transform active:scale-95 transition-all hover:brightness-110 flex items-center justify-center ${isMobile ? 'px-4 py-1.5 text-xs' : 'px-6 py-2.5'}`}
+          className="rounded-full font-bold shadow-lg transform active:scale-95 transition-all hover:brightness-110 flex items-center justify-center px-6 py-2.5"
           style={{ backgroundColor: PRIMARY_COLOR, color: DARK_BG }}
         >
-          Register <CaretDownOutlined className={`${isMobile ? 'text-[10px]' : 'text-xs'} ml-1`} />
+          Register <CaretDownOutlined className="text-xs ml-1" />
         </button>
-        {openRegister && (
-          <div className="absolute top-full right-0 mt-4 w-48 bg-white rounded-xl shadow-2xl overflow-hidden">
+        {openRegisterDesktop && (
+          <div className="absolute top-full right-0 mt-4 w-48 bg-white rounded-xl shadow-2xl overflow-hidden z-50">
             <button
               onClick={() => {
                 navigate("/register/employer");
-                setOpenRegister(false);
-                setIsMenuOpen(false);
+                setOpenRegisterDesktop(false);
               }}
               className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
             >
@@ -153,8 +167,90 @@ const Header = () => {
             <button
               onClick={() => {
                 navigate("/register/worker");
-                setOpenRegister(false);
-                setIsMenuOpen(false);
+                setOpenRegisterDesktop(false);
+              }}
+              className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
+            >
+              As Worker
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // FIX: mobile auth buttons — use separate mobile state + refs, proper z-index
+  const renderMobileAuthButtons = () => (
+    <div className="flex flex-row items-center gap-3">
+      {/* Login Dropdown — Mobile */}
+      <div className="relative" ref={loginMobileRef}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenLoginMobile((v) => !v);
+            setOpenRegisterMobile(false);
+          }}
+          className="text-white hover:text-[#f3a82f] font-semibold flex items-center gap-1 transition-colors text-sm"
+        >
+          Login{" "}
+          <CaretDownOutlined
+            className={`transition-transform text-[10px] ${openLoginMobile ? "rotate-180" : ""}`}
+          />
+        </button>
+        {openLoginMobile && (
+          <div className="absolute top-full right-0 mt-3 w-44 bg-white rounded-xl shadow-2xl overflow-hidden z-[9999]">
+            <button
+              onClick={() => {
+                navigate("/login/employer");
+                setOpenLoginMobile(false);
+              }}
+              className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#f3a82f] transition-colors"
+            >
+              As Employer
+            </button>
+            <div className="border-t border-gray-100" />
+            <button
+              onClick={() => {
+                navigate("/login/worker");
+                setOpenLoginMobile(false);
+              }}
+              className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#f3a82f] transition-colors"
+            >
+              As Worker
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Register Dropdown — Mobile */}
+      <div className="relative" ref={registerMobileRef}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenRegisterMobile((v) => !v);
+            setOpenLoginMobile(false);
+          }}
+          className="rounded-full font-bold shadow-lg transform active:scale-95 transition-all hover:brightness-110 flex items-center justify-center px-4 py-1.5 text-xs"
+          style={{ backgroundColor: PRIMARY_COLOR, color: DARK_BG }}
+        >
+          Register <CaretDownOutlined className="text-[10px] ml-1" />
+        </button>
+        {openRegisterMobile && (
+          <div className="absolute top-full right-0 mt-3 w-44 bg-white rounded-xl shadow-2xl overflow-hidden z-[9999]">
+            <button
+              onClick={() => {
+                navigate("/register/employer");
+                setOpenRegisterMobile(false);
+              }}
+              className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
+            >
+              As Employer
+            </button>
+            <div className="border-t border-gray-100" />
+            <button
+              onClick={() => {
+                navigate("/register/worker");
+                setOpenRegisterMobile(false);
               }}
               className="w-full text-left px-5 py-3 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
             >
@@ -202,6 +298,7 @@ const Header = () => {
       {/* Mobile Right Section */}
       <div className="md:hidden">
         {user ? (
+          // Logged-in mobile: show hamburger
           <button
             className="text-white p-2 hover:bg-gray-800 rounded-lg transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -213,7 +310,8 @@ const Header = () => {
             )}
           </button>
         ) : (
-          renderAuthButtons(true)
+          // FIX: not-logged-in mobile: use isolated mobile auth buttons
+          renderMobileAuthButtons()
         )}
       </div>
 
@@ -225,18 +323,18 @@ const Header = () => {
         />
       )}
 
-      {/* Navigation Menu (Hidden on mobile if not logged in since there is no hamburger trigger) */}
+      {/* Navigation */}
       <nav
-        className={` 
-        ${!user ? 'hidden md:flex' : isMenuOpen ? "flex translate-x-0" : "hidden md:flex md:translate-x-0"}
-        fixed md:static top-0 right-0 h-[100dvh] md:h-auto w-3/4 sm:w-1/2 md:w-auto
-        flex-col md:flex-row items-center gap-6 md:gap-8
-        pt-20 pb-10 px-8 md:p-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
-        ${isMenuOpen ? "bg-[#1e293b]" : "bg-transparent"}
-        z-50 overflow-y-auto md:overflow-visible
-      `}
+        className={`
+          ${!user ? "hidden md:flex" : isMenuOpen ? "flex translate-x-0" : "hidden md:flex md:translate-x-0"}
+          fixed md:static top-0 right-0 h-[100dvh] md:h-auto w-3/4 sm:w-1/2 md:w-auto
+          flex-col md:flex-row items-center gap-6 md:gap-8
+          pt-20 pb-10 px-8 md:p-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
+          ${isMenuOpen ? "bg-[#1e293b]" : "bg-transparent"}
+          z-50 overflow-y-auto md:overflow-visible
+        `}
       >
-        {/* Mobile-only Close Header */}
+        {/* Mobile-only Close Button */}
         <div
           className="md:hidden absolute top-5 right-5 text-white cursor-pointer"
           onClick={() => setIsMenuOpen(false)}
@@ -248,14 +346,15 @@ const Header = () => {
         <NavLink href="/about">About</NavLink>
 
         {!user ? (
-          renderAuthButtons(false)
+          // FIX: desktop nav uses isolated desktop auth buttons
+          renderDesktopAuthButtons()
         ) : (
           /* Logged In UI */
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="h-px w-10 bg-gray-600 md:h-8 md:w-px" />
 
             <div className="flex items-center gap-4">
-              {user.role === "worker" &&
+              {user.role === "worker" && (
                 <Popover
                   content={notificationContent}
                   title={<span className="font-bold">Notifications</span>}
@@ -271,15 +370,14 @@ const Header = () => {
                     <BellOutlined className="text-2xl text-white cursor-pointer hover:text-[#f3a82f] transition-colors" />
                   </Badge>
                 </Popover>
-              }
+              )}
 
-
-              <div className="flex flex-row items-end gap-1 whitespace-nowrap flex ">
+              <div className="flex flex-row items-end gap-1 whitespace-nowrap">
                 <span className="text-gray-400 text-[11px] font-bold uppercase tracking-wider">
                   Welcome
                 </span>
                 <span className="text-white text-sm font-medium">
-                  {" "} {user.name}
+                  {" "}{user.name}
                 </span>
               </div>
             </div>
@@ -288,8 +386,8 @@ const Header = () => {
               onClick={() =>
                 navigate(
                   user.role === "worker"
-                    ? "/dashboard/worker"
-                    : "/dashboard/employer",
+                    ? "/worker/dashboard"
+                    : "/employer/dashboard"
                 )
               }
               className="text-white hover:text-[#f3a82f] font-medium transition-colors"

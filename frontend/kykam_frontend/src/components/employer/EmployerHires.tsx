@@ -22,49 +22,86 @@ import {
   CheckCircleOutlined,
   ReloadOutlined
 } from "@ant-design/icons";
-import axios from "axios";
 import { CircleAlert } from "lucide-react";
+import api from "../../api/axios";
 
 const { Title, Text } = Typography;
-const API = import.meta.env.VITE_API_BASE_URL;
+
+interface HireRecord {
+  id: number;
+  worker_name: string;
+  worker_type?: string | null;
+  passport_img?: string | null;
+  status: string;
+  date: string;
+  worker_phone?: string | null;
+}
 
 const EmployerHires = () => {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<HireRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const normalizeCollection = (payload: unknown): HireRecord[] => {
+    if (Array.isArray(payload)) return payload as HireRecord[];
+    if (
+      typeof payload === "object" &&
+      payload !== null &&
+      "results" in payload &&
+      Array.isArray((payload as { results?: unknown[] }).results)
+    ) {
+      return (payload as { results: HireRecord[] }).results;
+    }
+    return [];
+  };
+
+  const formatDate = (date: string, options: Intl.DateTimeFormatOptions) => {
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "Unknown";
+    }
+    return parsedDate.toLocaleDateString("en-GB", options);
+  };
+
+  const formatTime = (date: string) => {
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "--:--";
+    }
+    return parsedDate.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const fetchMyRequests = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const res = await axios.get(
-        `${API}/api/employer-dashboard/my_requests/`,
-        {
-          headers: { Authorization: `Token ${token}` },
-        },
-      );
-      setData(res.data);
-    } catch (err) {
-      message.error("Failed to load your request history");
+      setError(null);
+      const res = await api.get("/employer-dashboard/my_requests/");
+      console.debug("Employer hires response:", res.data);
+      setData(normalizeCollection(res.data));
+    } catch (err: any) {
+      const nextError =
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        "Failed to load your request history.";
+      setError(nextError);
+      message.error(nextError);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMyRequests();
+    void fetchMyRequests();
   }, []);
 
   const handleDelete = async (bookingId: number) => {
     try {
-      const token = localStorage.getItem("token");
-      await axios.delete(
-        `${API}/api/employer-dashboard/${bookingId}/remove_history/`,
-        {
-          headers: { Authorization: `Token ${token}` },
-        },
-      );
+      await api.delete(`/employer-dashboard/${bookingId}/remove_history/`);
       message.success("Record removed from history");
-      fetchMyRequests();
+      void fetchMyRequests();
     } catch (err: any) {
       message.error(err.response?.data?.error || "Could not remove record");
     }
@@ -72,16 +109,9 @@ const EmployerHires = () => {
 
   const handleRelease = async (bookingId: number) => {
     try {
-      const token = localStorage.getItem("token");
-      await axios.post(
-        `${API}/api/employer-dashboard/${bookingId}/release_worker/`,
-        {},
-        {
-          headers: { Authorization: `Token ${token}` },
-        },
-      );
+      await api.post(`/employer-dashboard/${bookingId}/release_worker/`, {});
       message.success("Professional released successfully");
-      fetchMyRequests();
+      void fetchMyRequests();
     } catch (err: any) {
       message.error("Failed to release worker");
     }
@@ -119,7 +149,7 @@ const EmployerHires = () => {
     {
       title: "Professional",
       key: "worker",
-      render: (_: any, record: any) => (
+      render: (_: unknown, record: HireRecord) => (
         <Space size="middle">
           <Avatar
             size={48}
@@ -168,17 +198,14 @@ const EmployerHires = () => {
       render: (date: string) => (
         <div className="flex flex-col">
           <Text className="text-xs font-semibold text-slate-600">
-            {new Date(date).toLocaleDateString("en-GB", {
+            {formatDate(date, {
               day: "2-digit",
               month: "short",
               year: "numeric",
             })}
           </Text>
           <Text className="text-[10px] text-slate-400">
-            {new Date(date).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {formatTime(date)}
           </Text>
         </div>
       ),
@@ -187,7 +214,7 @@ const EmployerHires = () => {
       title: "Actions",
       key: "action",
       align: "right" as const,
-      render: (record: any) => (
+      render: (_: unknown, record: HireRecord) => (
         <Space>
           {record.status === "accepted" ? (
             <>
@@ -237,6 +264,16 @@ const EmployerHires = () => {
         className="rounded-3xl md:rounded-[2.5rem] border-none shadow-xl overflow-hidden"
         styles={{ body: { padding: "1.5rem" } }}
       >
+        {error ? (
+          <Alert
+            type="error"
+            showIcon
+            className="mb-6 rounded-2xl"
+            message="Unable to load hires"
+            description={error}
+          />
+        ) : null}
+
         {/* Advice Banner */}
     <Alert
   className="mb-6 rounded-2xl border-2  border-red-500 bg-white shadow-xl shadow-red-50 overflow-hidden relative"
@@ -291,7 +328,7 @@ const EmployerHires = () => {
           </div>
           <Button
             icon={<ReloadOutlined />}
-            onClick={fetchMyRequests}
+            onClick={() => void fetchMyRequests()}
             loading={loading}
             className="rounded-xl border-slate-200 h-10 px-4 font-bold text-slate-500 w-full sm:w-auto"
           >
@@ -308,6 +345,7 @@ const EmployerHires = () => {
             rowKey="id"
             pagination={{ pageSize: 6, hideOnSinglePage: true }}
             className="custom-management-table"
+            locale={{ emptyText: <Empty description="No history found" /> }}
           />
         </div>
 
@@ -320,7 +358,7 @@ const EmployerHires = () => {
           ) : data.length === 0 ? (
             <Empty description="No history found" />
           ) : (
-            data.map((record: any) => {
+            data.map((record) => {
               const config = getStatusConfig(record.status);
               return (
                 <div
@@ -356,7 +394,7 @@ const EmployerHires = () => {
                       Request Date
                     </div>
                     <div className="text-xs font-bold text-slate-600">
-                      {new Date(record.date).toLocaleDateString("en-GB", {
+                      {formatDate(record.date, {
                         day: "2-digit",
                         month: "short",
                       })}

@@ -116,7 +116,8 @@ class WorkerDashboardViewSet(viewsets.ViewSet):
             "employer_phone": i.employer.phone,
             "start_date": i.employer.start_date,
             "requirements": i.employer.requirements,
-            "created_at": i.created_at
+            "created_at": i.created_at,
+            "passport_img": request.build_absolute_uri(i.employer.passport_img.url) if i.employer.passport_img else None,
         } for i in invites]
         return Response(data)
 
@@ -145,6 +146,7 @@ class WorkerBookingViewSet(viewsets.ModelViewSet):
             "requirements": i.employer.requirements,
             "start_date": i.employer.start_date,
             "created_at": i.created_at,
+            "passport_img": request.build_absolute_uri(i.employer.passport_img.url) if i.employer.passport_img else None,
            
         } for i in invites]
         return Response(data)

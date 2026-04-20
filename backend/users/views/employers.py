@@ -20,6 +20,27 @@ from django.utils.html import strip_tags
 
 User = get_user_model()
 
+
+def serialize_employer_booking(booking, request):
+    worker = booking.worker
+    passport_img = None
+
+    if worker and worker.passport_img:
+        passport_img = request.build_absolute_uri(worker.passport_img.url)
+
+    return {
+        "id": booking.id,
+        "worker_id": worker.id if worker else None,
+        "worker_name": f"{worker.first_name} {worker.last_name}".strip() if worker else "Unknown Worker",
+        "worker_type": worker.worker_type if worker and worker.worker_type else "general_househelp",
+        "status": booking.status,
+        "date": booking.created_at,
+        "worker_phone": worker.phone if worker and booking.status == 'accepted' else None,
+        "passport_img": passport_img,
+        "location": worker.location if worker else None,
+        "is_available": worker.is_available if worker else False,
+    }
+
 class EmployerDashboardViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
@@ -54,35 +75,19 @@ class EmployerDashboardViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def my_requests(self, request):
-        bookings = Booking.objects.filter(employer=request.user).select_related('worker')
-        data = [{
-            "id": b.id,
-            "worker_name": f"{b.worker.first_name} {b.worker.last_name}",
-            "status": b.status,
-            "date": b.created_at,
-            "worker_phone": b.worker.phone if b.status == 'accepted' else "Locked"
-        } for b in bookings]
+        bookings = Booking.objects.filter(employer=request.user).select_related('worker').order_by('-created_at')
+        data = [serialize_employer_booking(booking, request) for booking in bookings]
         return Response(data)
     
     
     @action(detail=False, methods=['get'])
     def history(self, request):
         """Returns all hiring requests made by the current employer"""
-        bookings = Booking.objects.filter(employer=request.user).order_by('-created_at')
-        
+        bookings = Booking.objects.filter(employer=request.user).select_related('worker').order_by('-created_at')
+
         data = []
         for b in bookings:
-            data.append({
-                "id": b.id,
-                "worker_id": b.worker.id,
-                "worker_name": f"{b.worker.first_name} {b.worker.last_name}",
-                "worker_type": b.worker.worker_type.replace('_', ' ') if b.worker.worker_type else "General",
-                "status": b.status,
-                "date": b.created_at.strftime("%d %b %Y"),
-                # Only show phone if worker accepted
-                "worker_phone": b.worker.phone if b.status == 'accepted' else None,
-                "location": b.worker.location
-            })
+            data.append(serialize_employer_booking(b, request))
         return Response(data)
     @action(detail=True, methods=['delete'])
     def remove_history(self, request, pk=None):

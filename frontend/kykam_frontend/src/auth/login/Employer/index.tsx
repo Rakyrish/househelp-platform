@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext"; 
-import { message } from "antd";
 
 function EmployerLogin() {
   const navigate = useNavigate();
@@ -31,11 +30,8 @@ function EmployerLogin() {
         password: formData.password,
         type: "employer",
       });
-      message.success("Login successful!");
-      navigate("/dashboard/employer");
     } catch (err: any) {
-     message.error("Invalid phone number or password.")   
-     
+      setError(err.response?.data?.error || err.response?.data?.detail || "Invalid phone number or password.");
     } finally {
       setLoading(false);
     }

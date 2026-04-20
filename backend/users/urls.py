@@ -79,20 +79,4 @@ urlpatterns = [
    
     # Include all router-generated URLs
     path('', include(router.urls)),
-
-    path('contact-us/', views.ContactUsView.as_view()),
-    path("set-csrf/", views.set_csrf_token, name='set-csrf'),
-
-    # Manual Payment Verification
-    path("payment/submit/", SubmitManualPaymentView.as_view(), name="submit-manual-payment"),
-    path("admin/payments/", AdminPaymentListView.as_view(), name="admin-payment-list"),
-    path("admin/payments/<int:pk>/approve/", AdminPaymentApproveView.as_view(), name="admin-payment-approve"),
-    path("admin/payments/<int:pk>/reject/", AdminPaymentRejectView.as_view(), name="admin-payment-reject"),
-    
-    path("admin/notifications/", AdminNotificationListView.as_view(), name="admin-notifications"),
-    path("admin/notifications/<int:pk>/read/", AdminNotificationMarkReadView.as_view(), name="admin-notifications-read"),
-   
-    # Include all router-generated URLs
-    path('', include(router.urls)),
 ]
-

@@ -1,39 +1,4 @@
-import React from 'react';
-import { Users, Search, Headset } from 'lucide-react'; // Optimized for your use case
-
 function HowItWorks() {
-  const sectionStyle = {
-    padding: "100px 20px",
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    textAlign: "center",
-    backgroundColor: "#ffffff"
-  } as React.CSSProperties;
-
-  const cardStyle = {
-    backgroundColor: "#f8fafc",
-    padding: "40px 30px",
-    borderRadius: "24px",
-    width: "320px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    transition: "all 0.3s ease",
-    border: "1px solid #f1f5f9"
-  } as React.CSSProperties;
-
-  const iconContainerStyle = {
-    marginBottom: "24px",
-    backgroundColor: "#f3a82f", // Solid brand color for contrast
-    width: "70px",
-    height: "70px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "18px",
-    color: "white", // White icon on orange background
-    boxShadow: "0 10px 15px -3px rgba(243, 168, 47, 0.3)"
-  };
-
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-slate-100 py-16 px-4 md:py-24">
 

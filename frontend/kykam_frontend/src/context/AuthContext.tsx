@@ -8,12 +8,14 @@ import {
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
+import { getDashboardPath } from '../utils/authRoutes';
 
 // --- Types ---
 
 interface User {
   name: string;
   role: 'worker' | 'employer' | 'admin';
+  status?: string;
   verification_status?: string;
   payment_submitted_at?: string | null;
   is_verified?: boolean;
@@ -76,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return {
       name: `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Worker',
       role: data.role || 'worker',
+      status: data.status,
       verification_status: data.verification_status,
       payment_submitted_at: data.payment_submitted_at,
       is_verified: data.is_verified,
@@ -119,26 +122,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data } = await api.post(`/login/${type}/`, { phone, password });
       api.defaults.headers.common['Authorization'] = `Token ${data.token}`;
+      const role = data.user?.role || data.role;
+      const redirectPath = data.redirect || getDashboardPath(role);
 
-      const authUser: User = data.role === 'worker'
+      const authUser: User = role === 'worker'
         ? await fetchWorkerUser()
         : {
-            name: data.name,
-            role: data.role,
-            verification_status: data.verification_status,
+            name: data.user?.name || data.name || 'User',
+            role,
+            status: data.user?.status || data.status,
+            verification_status: data.user?.verification_status || data.verification_status,
+            is_verified: data.user?.is_verified,
           };
 
       persistSession(authUser, data.token);
-      message.success('Login Successful');
+      message.success('Login successful');
 
-      // Redirect based on role
-      navigate(
-        data.role === 'admin'
-          ? '/admin'
-          : data.role === 'employer'
-            ? '/dashboard/employer'
-            : '/dashboard/worker'
-      );
+      navigate(redirectPath, { replace: true });
     } catch (error: any) {
       if (error.response?.data?.requires_payment) {
         throw error;

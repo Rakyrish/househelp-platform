@@ -1,14 +1,13 @@
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Drawer, Form, Input, Select, Button, message, Space, Upload } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import api from '../../api/axios';
 
 const { Option } = Select;
 
 const EditProfileDrawer = ({ visible, onClose, initialData, onUpdate }: any) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const API = import.meta.env.VITE_API_BASE_URL;
 
   // Synchronize form with initialData when it changes or drawer opens
   useEffect(() => {
@@ -18,39 +17,33 @@ const EditProfileDrawer = ({ visible, onClose, initialData, onUpdate }: any) => 
   }, [visible, initialData, form]);
 
   const onFinish = async (values: any) => {
-  setLoading(true);
-  try {
-    const token = localStorage.getItem('token');
-    const formData = new FormData();
-    
-    formData.append('worker_type', values.worker_type || '');
-    formData.append('experience', values.experience || '');
-    formData.append('location', values.location || '');
-    formData.append('kin_name', values.kin_name || '');
-    formData.append('kin_phone', values.kin_phone || '');
-    formData.append('expected_salary', values.expected_salary || '');
+    setLoading(true);
+    try {
 
-    // FIX: Check for the file object correctly in Ant Design Upload structure
-    if (values.passport_img && values.passport_img.fileList && values.passport_img.fileList[0]) {
-      formData.append('passport_img', values.passport_img.fileList[0].originFileObj);
-    }
+      const formData = new FormData();
 
-    await axios.patch(`${API}/api/worker/dashboard/update_profile/`, formData, {
-      headers: { 
-        Authorization: `Token ${token}`,
-        'Content-Type': 'multipart/form-data' 
+      formData.append('worker_type', values.worker_type || '');
+      formData.append('experience', values.experience || '');
+      formData.append('location', values.location || '');
+      formData.append('kin_name', values.kin_name || '');
+      formData.append('kin_phone', values.kin_phone || '');
+      formData.append('expected_salary', values.expected_salary || '');
+
+      // FIX: Check for the file object correctly in Ant Design Upload structure
+      if (values.passport_img && values.passport_img.fileList && values.passport_img.fileList[0]) {
+        formData.append('passport_img', values.passport_img.fileList[0].originFileObj);
       }
-    });
 
-    message.success("Profile updated successfully!");
-    onUpdate(); // This triggers fetchProfile in the parent
-    onClose();
-  } catch (err) {
-    message.error("Failed to update profile.");
-  } finally {
-    setLoading(false);
-  }
-};
+      await api.patch('worker/dashboard/update_profile/', formData);
+      message.success("Profile updated successfully!");
+      onUpdate(); // This triggers fetchProfile in the parent
+      onClose();
+    } catch (err) {
+      message.error("Failed to update profile.");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <Drawer
       title="Edit My Job Profile"
@@ -61,10 +54,10 @@ const EditProfileDrawer = ({ visible, onClose, initialData, onUpdate }: any) => 
       extra={
         <Space size="middle">
           <Button onClick={onClose} className="rounded-xl font-medium border-slate-200">Cancel</Button>
-          <Button 
-            onClick={() => form.submit()} 
-            type="primary" 
-            loading={loading} 
+          <Button
+            onClick={() => form.submit()}
+            type="primary"
+            loading={loading}
             className="bg-[#f3a82f] hover:!bg-[#e69815] transition-colors border-none font-bold rounded-xl shadow-md shadow-orange-500/20 px-6 h-9"
           >
             Save Changes
@@ -112,17 +105,17 @@ const EditProfileDrawer = ({ visible, onClose, initialData, onUpdate }: any) => 
           <Input placeholder="e.g. 0712345678" inputMode="numeric" />
         </Form.Item>
 
-        <Form.Item 
-        name="passport_img" // Changed from passport_image to passport_img
-        label="Update Passport Image"
+        <Form.Item
+          name="passport_img" // Changed from passport_image to passport_img
+          label="Update Passport Image"
         >
-        <Upload 
-            maxCount={1} 
-            beforeUpload={() => false} 
+          <Upload
+            maxCount={1}
+            beforeUpload={() => false}
             listType="picture"
-        >
+          >
             <Button icon={<UploadOutlined />} block>Click to Upload Photo</Button>
-        </Upload>
+          </Upload>
         </Form.Item>
 
         <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-blue-700 text-xs">

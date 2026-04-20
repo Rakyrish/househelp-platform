@@ -25,6 +25,7 @@
 import type { JSX } from "react/jsx-dev-runtime";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { EMPLOYER_LOGIN_PATH, getDashboardPath, getLoginPath } from "../utils/authRoutes";
 
 interface ProtectedRouteProps {
   children: JSX.Element;
@@ -39,18 +40,16 @@ const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) => {
 
   // 2️⃣ Not logged in at all
   if (!token || !user) {
-    // If trying to access admin, send to admin login
-    if (allowedRole === "admin") return <Navigate to="/admin/login" replace />;
-    // Otherwise send to public home
-    return <Navigate to="/" replace />;
+    return <Navigate to={getLoginPath(allowedRole)} replace />;
   }
 
   // 3️⃣ Wrong role trying to access a protected route
   if (allowedRole && user.role !== allowedRole) {
-    // Admin trying to access worker dashboard → send to /admin
     if (user.role === "admin") return <Navigate to="/admin" replace />;
-    // Worker trying to access employer dashboard → send to worker dashboard
-    return <Navigate to={`/dashboard/${user.role}`} replace />;
+    if (allowedRole === "employer") {
+      return <Navigate to={EMPLOYER_LOGIN_PATH} replace />;
+    }
+    return <Navigate to={getDashboardPath(user.role)} replace />;
   }
 
   // ✅ All good
@@ -58,5 +57,4 @@ const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) => {
 };
 
 export default ProtectedRoute;
-
 

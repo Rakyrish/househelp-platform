@@ -47,17 +47,47 @@ def get_fresh_user(user):
     return User.objects.get(pk=user.pk)
 
 
-def build_worker_login_response(user):
-    token = rotate_token(user)
-    return Response({
+def build_login_payload(user, redirect_path, token):
+    display_name = f"{user.first_name} {user.last_name}".strip() or user.email or user.phone
+    payload = {
+        "success": True,
         "message": "Login successful",
         "token": token.key,
         "role": user.role,
-        "name": f"{user.first_name} {user.last_name}".strip(),
+        "status": user.status,
+        "name": display_name,
         "verification_status": user.verification_status,
-        "payment_submitted_at": user.payment_submitted_at.isoformat() if user.payment_submitted_at else None,
-        "redirect": "/dashboard/worker"
-    }, status=status.HTTP_200_OK)
+        "redirect": redirect_path,
+        "user": {
+            "id": user.pk,
+            "name": display_name,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone": user.phone,
+            "role": user.role,
+            "status": user.status,
+            "verification_status": user.verification_status,
+            "is_verified": user.is_verified,
+        },
+    }
+
+    if user.payment_submitted_at:
+        payload["payment_submitted_at"] = user.payment_submitted_at.isoformat()
+        payload["user"]["payment_submitted_at"] = payload["payment_submitted_at"]
+    else:
+        payload["payment_submitted_at"] = None
+        payload["user"]["payment_submitted_at"] = None
+
+    return payload
+
+
+def build_worker_login_response(user):
+    token = rotate_token(user)
+    return Response(
+        build_login_payload(user, "/worker/dashboard", token),
+        status=status.HTTP_200_OK,
+    )
 
 # -----------------------------------------------------------
 # AUTHENTICATION & REGISTRATION
@@ -92,8 +122,10 @@ class RegisterWorkerView(generics.CreateAPIView):
             cache.set(f"pay_token:{payment_token}", user.id, timeout=86400)
             
             return Response({
+                "success": True,
                 "message": "Worker account created successfully.",
-                "user": {"email": user.email, "role": user.role},
+                "redirect": "/payment/verify",
+                "user": {"email": user.email, "role": user.role, "status": user.status},
                 "payment_token": payment_token
             }, status=status.HTTP_201_CREATED)
             
@@ -116,8 +148,15 @@ class RegisterEmployerView(generics.CreateAPIView):
         if serializer.is_valid():
             user = serializer.save()
             return Response({
+                "success": True,
                 "message": "Employer account created successfully.",
-                "user": {"email": user.email, "first_name": user.first_name, "role": user.role}
+                "redirect": "/login",
+                "user": {
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "role": user.role,
+                    "status": user.status,
+                },
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -181,12 +220,10 @@ class EmployerLoginView(generics.GenericAPIView):
         if serializer.is_valid():
             user = serializer.validated_data
             token = rotate_token(user)
-            return Response({
-                "token": token.key,
-                "role": user.role,
-                "name": f"{user.first_name} {user.last_name}",
-                "redirect": "/dashboard/employer"
-            }, status=status.HTTP_200_OK)
+            return Response(
+                build_login_payload(user, "/employer/dashboard", token),
+                status=status.HTTP_200_OK,
+            )
         return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
 class AdminLoginView(generics.GenericAPIView):
@@ -199,12 +236,7 @@ class AdminLoginView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data
         token = rotate_token(user)
-        return Response({
-            "token": token.key,
-            "role": user.role,
-            "name": f"{user.first_name} {user.last_name}",
-            "redirect": "/admin",
-        }, status=status.HTTP_200_OK)
+        return Response(build_login_payload(user, "/admin", token), status=status.HTTP_200_OK)
 
 class LogoutView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]

@@ -45,10 +45,6 @@ function WorkerLogin() {
         password: formData.password,
         type: "worker",
       });
-
-      message.success("Login successful!");
-      navigate("/dashboard/worker");
-
     } catch (err: any) {
       if (err.response?.status === 403) {
         if (err.response?.data?.requires_payment) {

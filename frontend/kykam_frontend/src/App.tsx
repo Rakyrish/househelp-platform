@@ -35,6 +35,7 @@ import PaymentReview from "./pages/admin/PaymentReview";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PaymentVerification from "./pages/payment/PaymentVerification";
+import { EMPLOYER_LOGIN_ROUTE } from "./utils/authRoutes";
 
 // API Instance (Your fixed axios instance withCredentials: true)
 import api from "./api/axios";
@@ -133,6 +134,7 @@ function App() {
                     <Route path="/payment/verify" element={<PaymentVerification />} />
 
                     {/* Auth Routes */}
+                    <Route path="/login" element={<Navigate to={EMPLOYER_LOGIN_ROUTE} replace />} />
                     <Route path="/login/worker" element={<WorkerLogin />} />
                     <Route path="/login/employer" element={<EmployerLogin />} />
                     <Route path="/register/worker" element={<RegisterWorker />} />
@@ -142,23 +144,25 @@ function App() {
 
                     {/* Private Worker Routes */}
                     <Route
-                      path="/dashboard/worker"
+                      path="/worker/dashboard"
                       element={
                         <ProtectedRoute allowedRole="worker">
                           <Worker />
                         </ProtectedRoute>
                       }
                     />
+                    <Route path="/dashboard/worker" element={<Navigate to="/worker/dashboard" replace />} />
 
                     {/* Private Employer Routes */}
                     <Route
-                      path="/dashboard/employer"
+                      path="/employer/dashboard"
                       element={
                         <ProtectedRoute allowedRole="employer">
                           <Employer />
                         </ProtectedRoute>
                       }
                     />
+                    <Route path="/dashboard/employer" element={<Navigate to="/employer/dashboard" replace />} />
                     <Route
                       path="/dashboard/workerDir"
                       element={
