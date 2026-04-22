@@ -79,7 +79,7 @@ function WorkerLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-100 to-yellow-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
+      <div className="max-w-md w-full space-y-8 bg-white p-6 sm:p-10 rounded-xl shadow-lg border border-gray-100">
         <div>
           <div className="mx-auto h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
             <svg

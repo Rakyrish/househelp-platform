@@ -72,7 +72,7 @@ const WorkerRequests = () => {
   ) => {
     setActionLoading(id)
     try {
-      const res = await api.post(`worker-requests/${id}/respond_to_request/`, {
+      await api.post(`worker-requests/${id}/respond_to_request/`, {
         status,
       })
 

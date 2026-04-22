@@ -106,14 +106,14 @@ class User(AbstractUser):
 
     @property
     def has_timed_access(self):
-        """Returns True if user is under_review AND within the 1-minute access window."""
+        """Returns True if user is under_review AND within the 10-minute access window."""
         if self.verification_status != 'under_review':
             return False
         if not self.payment_submitted_at:
             return False
         from django.utils import timezone
         from datetime import timedelta
-        return timezone.now() <= self.payment_submitted_at + timedelta(minutes=1)
+        return timezone.now() <= self.payment_submitted_at + timedelta(minutes=10)
 
     def __str__(self):
         return f"{self.username} ({self.role})"

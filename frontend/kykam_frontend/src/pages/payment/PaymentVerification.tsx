@@ -187,7 +187,7 @@ const PaymentVerification = () => {
                             </p>
                             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
                                 <p className="text-amber-800 text-sm font-medium">
-                                    ⚠️ You have <strong>1 minute</strong> to log in and access your dashboard. After that, access is suspended until admin approval.
+                                    ⚠️ You have <strong>10 minute</strong> to log in and access your dashboard. After that, access is suspended until admin approval.
                                 </p>
                             </div>
                             <button

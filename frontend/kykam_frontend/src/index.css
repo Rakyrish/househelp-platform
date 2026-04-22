@@ -8,8 +8,7 @@
 
   /* Only applies between 0px and 639px */
   @media (max-width: 639px) {
-    @apply px-4;
-    /* Any other mobile-only styles here */
+    @apply px-3;
   }
 
   /* Your desktop/tablet overrides */
@@ -19,6 +18,25 @@
 /* Optional: custom styles */
 html, body {
   @apply bg-gray-100 font-sans w-full overflow-x-hidden;
+}
+
+/* Ant Design Tabs: horizontal scroll on mobile */
+.ant-tabs-nav-list {
+  flex-wrap: nowrap !important;
+}
+.ant-tabs-nav-wrap {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+.ant-tabs-nav-wrap::-webkit-scrollbar {
+  height: 0;
+  display: none;
+}
+
+/* Ant Design Table: horizontal scroll on mobile */
+.ant-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Custom Orange Theme Overrides */

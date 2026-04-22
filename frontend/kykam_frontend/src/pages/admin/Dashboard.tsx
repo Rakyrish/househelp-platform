@@ -96,22 +96,22 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="space-y-8 p-6 lg:p-0">
-      <div className="flex justify-between items-end">
+    <div className="space-y-6 sm:space-y-8 p-2 sm:p-6 lg:p-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 sm:gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">System Overview</h2>
-          <p className="text-slate-400">Marketplace health and user verification nexus</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">System Overview</h2>
+          <p className="text-slate-400 text-sm sm:text-base">Marketplace health and user verification nexus</p>
         </div>
         <button 
           onClick={fetchData}
-          className="px-6 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-[10px] font-bold text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all"
+          className="px-4 sm:px-6 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-[10px] font-bold text-cyan-400 hover:bg-cyan-500 hover:text-black transition-all w-full sm:w-auto text-center"
         >
           SYNC DATABASE
         </button>
       </div>
 
       {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <StatCard 
           title="Active Engagements" 
           value={stats?.active_hires || 0} 
@@ -143,13 +143,13 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content Tabs */}
-      <div className="dashboard-card bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden">
-        <Tabs defaultActiveKey="1" className="admin-tabs" tabBarStyle={{ padding: '0 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="dashboard-card bg-white/[0.02] border border-white/5 rounded-2xl sm:rounded-3xl overflow-hidden">
+        <Tabs defaultActiveKey="1" className="admin-tabs" tabBarStyle={{ padding: '0 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto' }}>
           <TabPane 
             tab={<span className="flex items-center gap-2"><TeamOutlined />Member Directory</span>} 
             key="1"
           >
-            <div className="p-6">
+            <div className="p-3 sm:p-6 overflow-x-auto">
                <UserTable users={users} />
             </div>
           </TabPane>
@@ -158,7 +158,7 @@ const Dashboard = () => {
             tab={<span className="flex items-center gap-2"><SafetyCertificateOutlined />Hiring Registry</span>} 
             key="2"
           >
-            <div className="p-6">
+            <div className="p-3 sm:p-6 overflow-x-auto">
               <HiringRegistry hires={hires} loading={false} refreshData={fetchHires} />
             </div>
           </TabPane>
@@ -167,9 +167,9 @@ const Dashboard = () => {
             tab={<span className="flex items-center gap-2"><BarChartOutlined />Platform Alerts</span>} 
             key="3"
           >
-            <div className="p-6 space-y-4 max-w-2xl">
+            <div className="p-3 sm:p-6 space-y-4 max-w-2xl">
                 {stats && stats.pending > 0 && (
-                  <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex justify-between items-center">
+                  <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div>
                         <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">Verification Queue</p>
                         <p className="text-sm text-slate-300 mt-1">{stats.pending} users are awaiting identity verification.</p>
@@ -187,7 +187,7 @@ const Dashboard = () => {
             tab={<span className="flex items-center gap-2"><AppstoreOutlined />Categories</span>} 
             key="4"
           >
-            <div className="p-6">
+            <div className="p-3 sm:p-6">
               <CategoryManager />
             </div>
           </TabPane>
@@ -195,7 +195,7 @@ const Dashboard = () => {
           tab={<span className="flex items-center gap-2"><SettingOutlined />System Settings</span>} 
           key="5"
         >
-          <div className="p-10">
+          <div className="p-3 sm:p-10">
             <PlatformSettings />
           </div>
         </TabPane>
@@ -203,9 +203,13 @@ const Dashboard = () => {
       </div>
 
       <style>{`
-        .admin-tabs .ant-tabs-tab { color: #64748b !important; padding: 16px 0 !important; font-weight: 600 !important; font-size: 12px !important; }
+        .admin-tabs .ant-tabs-nav { overflow-x: auto !important; }
+        .admin-tabs .ant-tabs-tab { color: #64748b !important; padding: 12px 0 !important; font-weight: 600 !important; font-size: 11px !important; white-space: nowrap; }
         .admin-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: #22d3ee !important; }
         .admin-tabs .ant-tabs-ink-bar { background: #22d3ee !important; }
+        @media (min-width: 640px) {
+          .admin-tabs .ant-tabs-tab { padding: 16px 0 !important; font-size: 12px !important; }
+        }
       `}</style>
     </div>
   );

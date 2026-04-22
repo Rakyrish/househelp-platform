@@ -122,7 +122,7 @@ const WorkerDashboard = () => {
       profile?.payment_submitted_at
     ) {
       const expiryTime =
-        new Date(profile.payment_submitted_at).getTime() + 2 * 60 * 1000;
+        new Date(profile.payment_submitted_at).getTime() + 10 * 60 * 1000;
       const remainingMs = expiryTime - Date.now();
 
       if (remainingMs <= 0) {
@@ -133,8 +133,14 @@ const WorkerDashboard = () => {
 
       setTimeLeft(Math.ceil(remainingMs / 1000));
 
+      const formatMins = (s: number) => {
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${m}:${String(sec).padStart(2, "0")}`;
+      };
+
       message.warning({
-        content: `Your account is under review. You will be logged out in ${Math.ceil(remainingMs / 1000)} seconds if not verified.`,
+        content: `Your account is under review. You will be logged out in ${formatMins(Math.ceil(remainingMs / 1000))} if not verified.`,
         duration: 5,
         className: "mt-12",
       });
@@ -225,11 +231,11 @@ const WorkerDashboard = () => {
                       Account Under Review
                     </span>
                   }
-                  description={`Your payment is under review. You have limited time access — your session will expire in ${timeLeft !== null ? timeLeft : "--"
-                    } seconds.`}
+                  description={`Your payment is under review. You have limited time access — session expires in ${timeLeft !== null ? `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, "0")}` : "--:--"
+                    }.`}
                   type="warning"
                   showIcon
-                  className="rounded-2xl shadow-sm border-none bg-amber-50"
+                  className="rounded-2xl shadow-sm border-none bg-amber-50 animate-bounce"
                 />
               ) : profile.status === "rejected" ? (
                 <Alert
@@ -449,16 +455,16 @@ const WorkerDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50 p-3 sm:p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <header className="mb-10 flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-[#f3a82f] to-[#f97316] p-8 md:px-12 rounded-[2.5rem] shadow-xl shadow-orange-500/20 text-white relative overflow-hidden">
+        <header className="mb-6 sm:mb-10 flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-[#f3a82f] to-[#f97316] p-5 sm:p-8 md:px-12 rounded-2xl sm:rounded-[2.5rem] shadow-xl shadow-orange-500/20 text-white relative overflow-hidden">
           {/* Decorative background element */}
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl mix-blend-overlay"></div>
 
-          <div className="flex items-center gap-6 z-10">
-            <div className="relative">
+          <div className="flex items-center gap-4 sm:gap-6 z-10">
+            <div className="relative flex-shrink-0">
               <Avatar
-                size={96}
+                size={72}
                 src={getFullUrl(profile.passport_img)}
                 icon={<UserOutlined />}
                 className="border-4 border-white/80 shadow-2xl bg-white text-[#f3a82f]"
@@ -469,27 +475,27 @@ const WorkerDashboard = () => {
                 </div>
               )}
             </div>
-            <div>
+            <div className="min-w-0">
               <Title
-                level={2}
-                className="!m-0 !font-black !text-white drop-shadow-sm"
+                level={3}
+                className="!m-0 !font-black !text-white drop-shadow-sm !text-xl sm:!text-2xl"
               >
                 Hi, {profile.first_name || "Worker"}!
               </Title>
             </div>
           </div>
 
-          <div className="mt-6 md:mt-0 flex gap-3 z-10 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+          <div className="mt-4 md:mt-0 flex flex-wrap gap-2 sm:gap-3 z-10 w-full md:w-auto justify-center md:justify-end">
             <Button
               onClick={() => logout()}
               ghost
-              className="rounded-xl border-white/50 text-white hover:!bg-white hover:!text-orange-500 font-semibold px-6"
+              className="rounded-xl border-white/50 text-white hover:!bg-white hover:!text-orange-500 font-semibold px-4 sm:px-6"
             >
               Logout
             </Button>
             <Tag
               color={profile.is_verified ? "success" : "default"}
-              className={`px-6 py-2 rounded-2xl font-black border-none text-[10px] tracking-widest uppercase flex items-center shadow-sm ${!profile.is_verified && "bg-white/20 text-white"
+              className={`px-3 sm:px-6 py-2 rounded-2xl font-black border-none text-[9px] sm:text-[10px] tracking-widest uppercase flex items-center shadow-sm ${!profile.is_verified && "bg-white/20 text-white"
                 }`}
             >
               {profile.is_verified ? "Verified Professional" : "Verification Pending"}
@@ -498,8 +504,9 @@ const WorkerDashboard = () => {
         </header>
 
         <style>{`
+          .worker-tabs .ant-tabs-nav { overflow-x: auto !important; }
           .worker-tabs .ant-tabs-nav:before { border-bottom: none !important; }
-          .worker-tabs .ant-tabs-tab { border-radius: 12px !important; margin-right: 8px !important; transition: all 0.3s; background: white; border: 1px solid #f1f5f9; color: #64748b; font-weight: 600;}
+          .worker-tabs .ant-tabs-tab { border-radius: 12px !important; margin-right: 6px !important; transition: all 0.3s; background: white; border: 1px solid #f1f5f9; color: #64748b; font-weight: 600; white-space: nowrap; font-size: 13px;}
           .worker-tabs .ant-tabs-tab:hover { color: #f3a82f !important; border-color: #f3a82f !important; }
           .worker-tabs .ant-tabs-tab-active { background: #f3a82f !important; border-color: #f3a82f !important; box-shadow: 0 4px 14px 0 rgba(243, 168, 47, 0.39); }
           .worker-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: white !important; }

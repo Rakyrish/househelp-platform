@@ -293,10 +293,10 @@ const EmployerDashboard = () => {
     <Layout className="min-h-screen bg-[#f8fafc]">
       <Content className="p-4 lg:p-10">
         <div className="max-w-7xl mx-auto">
-          <header className="mb-8 flex justify-between items-end">
+          <header className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Employer Dashboard</h1>
-              <p className="text-slate-500">Find and manage your professional helpers.</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Employer Dashboard</h1>
+              <p className="text-slate-500 text-sm sm:text-base">Find and manage your professional helpers.</p>
             </div>
           </header>
 

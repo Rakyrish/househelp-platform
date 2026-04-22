@@ -1,4 +1,4 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 import api from '../api/axios';
 
 const ContactUs = () => {
@@ -23,7 +23,6 @@ const ContactUs = () => {
         try {
             const response = await api.post('contact-us/', formData);
             setStatus({ type: 'success', msg: response.data.success });
-            // Clear form on success
             setFormData({ name: '', email: '', subject: '', message: '' });
         } catch (error: any) {
             setStatus({ 
@@ -36,26 +35,25 @@ const ContactUs = () => {
     };
 
     return (
-        <div style={{ maxWidth: "600px", margin: "50px auto", padding: "20px", fontFamily: "sans-serif" }}>
-            <h2 style={{ color: "#0f172a", textAlign: "center" }}>Contact Kykam Agencies</h2>
-            <p style={{ textAlign: "center", color: "#64748b", marginBottom: "30px" }}>
+        <div className="max-w-xl mx-auto py-10 md:py-14 px-4 sm:px-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-2">
+                Contact Kykam Agencies
+            </h2>
+            <p className="text-center text-slate-500 mb-8 text-sm md:text-base">
                 Have a question? Send us a message and we'll reply to your email.
             </p>
 
             {status.msg && (
-                <div style={{ 
-                    padding: "15px", 
-                    borderRadius: "8px", 
-                    marginBottom: "20px",
-                    backgroundColor: status.type === 'success' ? "#dcfce7" : "#fee2e2",
-                    color: status.type === 'success' ? "#166534" : "#991b1b",
-                    textAlign: "center"
-                }}>
+                <div className={`p-4 rounded-xl mb-5 text-center text-sm font-medium ${
+                    status.type === 'success'
+                        ? 'bg-green-50 text-green-800 border border-green-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
+                }`}>
                     {status.msg}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <input
                     type="text"
                     name="name"
@@ -63,7 +61,7 @@ const ContactUs = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    style={inputStyle}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm md:text-base outline-none focus:ring-2 focus:ring-[#f3a82f]/30 focus:border-[#f3a82f] transition-all"
                 />
                 <input
                     type="email"
@@ -72,7 +70,7 @@ const ContactUs = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    style={inputStyle}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm md:text-base outline-none focus:ring-2 focus:ring-[#f3a82f]/30 focus:border-[#f3a82f] transition-all"
                 />
                 <input
                     type="text"
@@ -81,7 +79,7 @@ const ContactUs = () => {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    style={inputStyle}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm md:text-base outline-none focus:ring-2 focus:ring-[#f3a82f]/30 focus:border-[#f3a82f] transition-all"
                 />
                 <textarea
                     name="message"
@@ -90,36 +88,23 @@ const ContactUs = () => {
                     value={formData.message}
                     onChange={handleChange}
                     required
-                    style={{ ...inputStyle, resize: "vertical" }}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm md:text-base outline-none focus:ring-2 focus:ring-[#f3a82f]/30 focus:border-[#f3a82f] transition-all resize-y"
                 />
                 
                 <button 
                     type="submit" 
                     disabled={loading}
-                    style={{
-                        padding: "12px",
-                        backgroundColor: loading ? "#cbd5e1" : "#f3a82f",
-                        color: "#0f172a",
-                        border: "none",
-                        borderRadius: "6px",
-                        fontWeight: "bold",
-                        cursor: loading ? "not-allowed" : "pointer",
-                        transition: "0.3s"
-                    }}
+                    className={`w-full py-3 rounded-xl font-bold text-sm md:text-base transition-all active:scale-[0.98] ${
+                        loading
+                            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                            : 'bg-[#f3a82f] text-slate-900 hover:brightness-110 cursor-pointer'
+                    }`}
                 >
                     {loading ? "Sending..." : "Send Message"}
                 </button>
             </form>
         </div>
     );
-};
-
-const inputStyle = {
-    padding: "12px",
-    borderRadius: "6px",
-    border: "1px solid #cbd5e1",
-    fontSize: "16px",
-    outline: "none"
 };
 
 export default ContactUs;

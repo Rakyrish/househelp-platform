@@ -40,7 +40,7 @@ const StepIndicator = ({ current }: { current: number }) => (
           </div>
           {i < steps.length - 1 && (
             <div
-              className={`h-[2px] w-16 mb-5 mx-1 rounded-full transition-all duration-500 ${i < current ? "bg-[#f3a82f]" : "bg-slate-100"
+              className={`h-[2px] w-8 sm:w-16 mb-5 mx-0.5 sm:mx-1 rounded-full transition-all duration-500 ${i < current ? "bg-[#f3a82f]" : "bg-slate-100"
                 }`}
             />
           )}
@@ -482,7 +482,7 @@ const RegisterWorker = () => {
       `}</style>
 
         <div className="max-w-3xl mx-auto">
-          <div className="bg-[#f3a82f] rounded-3xl px-8 py-9 text-white relative overflow-hidden mb-6 shadow-lg shadow-orange-200/60">
+          <div className="bg-[#f3a82f] rounded-2xl sm:rounded-3xl px-5 sm:px-8 py-7 sm:py-9 text-white relative overflow-hidden mb-6 shadow-lg shadow-orange-200/60">
             <div className="relative z-10">
               <p className="text-orange-100 text-xs font-bold uppercase tracking-widest mb-1">Worker Portal</p>
               <h1 className="text-3xl font-extrabold tracking-tight">Create your account</h1>
@@ -496,12 +496,12 @@ const RegisterWorker = () => {
           </div>
 
           <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="px-8 pt-8 pb-2">
+            <div className="px-4 sm:px-8 pt-6 sm:pt-8 pb-2">
               <StepIndicator current={step} />
               <ProgressBar step={step} />
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 pt-6 space-y-8">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-8 pt-6 space-y-6 sm:space-y-8">
               {renderStep()}
 
               <div className="flex gap-3 pt-2">

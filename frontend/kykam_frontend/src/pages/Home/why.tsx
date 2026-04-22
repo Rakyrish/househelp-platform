@@ -1,86 +1,54 @@
-import React from 'react';
 import { ShieldCheck, Map, HandCoins } from 'lucide-react';
 
 function Why() {
-  const sectionStyle = {
-    padding: "100px 20px", 
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    textAlign: "center",
-    backgroundColor: "#f8fafc"
-  } as React.CSSProperties;
-
-  const cardStyle = {
-    backgroundColor: "white",
-    padding: "40px 30px",
-    borderRadius: "24px", // Slightly rounder for a friendlier feel
-    boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)",
-    width: "320px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    border: "1px solid #f1f5f9"
-  } as React.CSSProperties;
-
-  const iconContainerStyle = {
-    marginBottom: "24px", 
-    backgroundColor: "#fff7ed", // Kykam light orange tint
-    width: "80px", 
-    height: "80px", 
-    display: "flex", 
-    alignItems: "center", 
-    justifyContent: "center", 
-    borderRadius: "20px", // Squircle shape
-    color: "#f3a82f" // Kykam Brand Orange
-  };
-
   return (
-    <section style={sectionStyle}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        <h2 style={{ fontSize: "42px", color: "#0f172a", marginBottom: "16px", fontWeight: "800" }}>
-          Why Choose <span style={{ color: "#f3a82f" }}>Kykam?</span>
+    <section className="py-16 px-4 sm:px-6 md:py-24 text-center bg-slate-50 font-sans">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl sm:text-4xl md:text-[42px] text-slate-900 mb-4 font-extrabold leading-tight">
+          Why Choose <span className="text-[#f3a82f]">Kykam?</span>
         </h2>
-        <p style={{ color: "#64748b", marginBottom: "60px", fontSize: "19px", maxWidth: "700px", margin: "0 auto 60px" }}>
+        <p className="text-slate-500 text-base md:text-lg max-w-[700px] mx-auto mb-12 md:mb-16 leading-relaxed">
           We are more than an agency; we are a community built on security, transparency, and mutual respect.
         </p>
 
-        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "30px" }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           
           {/* Card 1: Safety */}
-          <div style={cardStyle}>
-            <div style={iconContainerStyle}>
+          <div className="bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+            <div className="mb-6 bg-orange-50 w-20 h-20 flex items-center justify-center rounded-2xl text-[#f3a82f]">
               <ShieldCheck size={40} strokeWidth={1.5} />
             </div>
-            <h3 style={{ color: "#0f172a", marginBottom: "15px", fontSize: "22px", fontWeight: "700" }}>Fully Verified</h3>
-            <p style={{ color: "#64748b", lineHeight: "1.7", fontSize: "15px" }}>
+            <h3 className="text-slate-900 mb-3 text-xl md:text-[22px] font-bold">Fully Verified</h3>
+            <p className="text-slate-500 leading-relaxed text-sm md:text-[15px]">
               We vet workers using National ID, Next of Kin data, and Good Conduct images to ensure your family's absolute safety.
             </p>
           </div>
 
           {/* Card 2: Coverage */}
-          <div style={cardStyle}>
-            <div style={iconContainerStyle}>
+          <div className="bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+            <div className="mb-6 bg-orange-50 w-20 h-20 flex items-center justify-center rounded-2xl text-[#f3a82f]">
               <Map size={40} strokeWidth={1.5} />
             </div>
-            <h3 style={{ color: "#0f172a", marginBottom: "15px", fontSize: "22px", fontWeight: "700" }}>Nationwide Reach</h3>
-            <p style={{ color: "#64748b", lineHeight: "1.7", fontSize: "15px" }}>
+            <h3 className="text-slate-900 mb-3 text-xl md:text-[22px] font-bold">Nationwide Reach</h3>
+            <p className="text-slate-500 leading-relaxed text-sm md:text-[15px]">
               From the heart of Nairobi to Nakuru, Kisumu, and Mombasa—Kykam brings professional service to every corner of Kenya.
             </p>
           </div>
 
           {/* Card 3: Fairness */}
-          <div style={cardStyle}>
-            <div style={iconContainerStyle}>
+          <div className="bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+            <div className="mb-6 bg-orange-50 w-20 h-20 flex items-center justify-center rounded-2xl text-[#f3a82f]">
               <HandCoins size={40} strokeWidth={1.5} />
             </div>
-            <h3 style={{ color: "#0f172a", marginBottom: "15px", fontSize: "22px", fontWeight: "700" }}>Direct & Fair</h3>
-            <p style={{ color: "#64748b", lineHeight: "1.7", fontSize: "15px" }}>
+            <h3 className="text-slate-900 mb-3 text-xl md:text-[22px] font-bold">Direct & Fair</h3>
+            <p className="text-slate-500 leading-relaxed text-sm md:text-[15px]">
               We eliminate exploitative middlemen. Workers earn fair wages, and employers enjoy clear, honest communication.
             </p>
           </div>
 
         </div>
       </div>
-    </section> 
+    </section>
   );
 }
 

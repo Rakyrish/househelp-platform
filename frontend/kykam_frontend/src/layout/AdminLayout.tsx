@@ -2,12 +2,14 @@ import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
+import { MenuOutlined, CloseOutlined } from '@ant-design/icons';
 
 const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, token } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const fetchNotifications = async () => {
     if (!token) return;
@@ -25,6 +27,11 @@ const AdminLayout = () => {
     return () => clearInterval(interval);
   }, [token]);
 
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + '/');
 
@@ -40,19 +47,45 @@ const AdminLayout = () => {
   ];
 
   const handleLogout = () => {
-    console.log('Logout clicked'); // check HMR console
     logout();
     navigate('/');
   };
 
   return (
     <div className="flex min-h-screen bg-[#020617] text-slate-200">
+      {/* Mobile Header Bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-[#050b14] border-b border-white/5 md:hidden">
+        <h1 className="text-base font-bold text-white">Admin Panel</h1>
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="text-white p-2 hover:bg-white/5 rounded-lg transition-colors"
+        >
+          {sidebarOpen ? <CloseOutlined className="text-lg" /> : <MenuOutlined className="text-lg" />}
+        </button>
+      </div>
+
+      {/* Backdrop (mobile only) */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 border-r border-white/5 bg-[#050b14] p-6 flex flex-col">
+      <aside
+        className={`
+          fixed md:sticky top-0 left-0 h-screen z-50
+          w-64 border-r border-white/5 bg-[#050b14] p-6 flex flex-col
+          transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          md:translate-x-0
+        `}
+      >
         <div className="mb-10 px-2">
           <h1 className="text-xl font-bold">Admin Panel</h1>
           <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-            Househelp System gcycyt
+            Househelp System
           </p>
         </div>
 
@@ -89,7 +122,7 @@ const AdminLayout = () => {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-4 pt-18 md:pt-8 md:p-8 min-w-0">
         <Outlet />
       </main>
     </div>

@@ -180,7 +180,7 @@ const RegisterEmployer = () => {
           <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
 
             {/* Header */}
-            <div className="bg-[#f3a82f] px-8 py-10 text-white relative">
+            <div className="bg-[#f3a82f] px-5 sm:px-8 py-8 sm:py-10 text-white relative">
               <div className="relative z-10">
                 <div className="inline-block bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4">
                   Employer Account
@@ -198,7 +198,7 @@ const RegisterEmployer = () => {
               />
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-10">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-8 sm:space-y-10">
 
               {/* Section 1: Personal Details */}
               <section>
@@ -282,7 +282,7 @@ const RegisterEmployer = () => {
               </div>
 
               {/* Section 2: Job Requirements */}
-              <section className="bg-slate-50 -mx-8 px-8 py-8 border-y border-slate-100">
+              <section className="bg-slate-50 -mx-4 sm:-mx-8 px-4 sm:px-8 py-6 sm:py-8 border-y border-slate-100">
                 <div className="flex items-center gap-2 mb-6 text-slate-800">
                   <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
                     <ClipboardList size={20} />
