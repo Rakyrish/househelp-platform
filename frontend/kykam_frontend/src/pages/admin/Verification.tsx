@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/axios';
 import DocumentPreview from '../../components/admin/DocumentPreview';
 import RejectionModal from '../../components/admin/RejectionModal';
 import { message, Tag, Space, Button, Divider } from 'antd';
@@ -13,8 +13,6 @@ import {
   HomeOutlined
 } from '@ant-design/icons';
 
-const API = import.meta.env.VITE_API_BASE_URL;
-
 const VerificationPage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -25,10 +23,7 @@ const VerificationPage = () => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`${API}/api/admin/manage-users/${userId}/`, {
-          headers: { Authorization: `Token ${token}` }
-        });
+        const res = await api.get(`/admin/manage-users/${userId}/`);
         setUser(res.data);
       } catch (error) {
         message.error("Failed to load user details");
@@ -41,10 +36,7 @@ const VerificationPage = () => {
 
   const handleApprove = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API}/api/admin/manage-users/${userId}/approve_worker/`, {}, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      await api.post(`/admin/manage-users/${userId}/approve_worker/`);
       message.success("Account successfully verified!");
       navigate('/admin/users');
     } catch (err) {
@@ -54,10 +46,8 @@ const VerificationPage = () => {
 
   const handleReject = async (reasons: string[], comment: string) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API}/api/admin/manage-users/${userId}/reject_worker/`, 
-        { reasons, comment }, 
-        { headers: { Authorization: `Token ${token}` } }
+      await api.post(`/admin/manage-users/${userId}/reject_worker/`, 
+        { reasons, comment }
       );
       message.warning("Application rejected");
       setIsModalOpen(false);

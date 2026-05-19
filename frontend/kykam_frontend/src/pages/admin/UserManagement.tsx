@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axios';
 import UserTable from '../../components/admin/UserTable';
-const API = import.meta.env.VITE_API_BASE_URL;
+
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -9,12 +9,9 @@ const UserManagement = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Replace with your login token logic
-        const token = localStorage.getItem('token'); 
-        const response = await axios.get(`${API}/api/admin/manage-users/`, {
-          headers: { Authorization: `Token ${token}` }
-        });
-        setUsers(response.data);
+        const response = await api.get(`/admin/manage-users/`);
+        const data = response.data.results || response.data;
+        setUsers(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error fetching users:", error);
       } finally {

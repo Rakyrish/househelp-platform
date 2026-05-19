@@ -1,44 +1,53 @@
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import axios from "axios";
+import { HelmetProvider } from "react-helmet-async";
 
-// Layouts
+// Layouts (Keep Static for initial shell)
 import Header from "./layout/header";
 import Footer from "./layout/footer";
 import AdminLayout from "./layout/AdminLayout";
 
-// Public & Auth Pages
-import Home from "./pages/Home/Home";
-import About from "./pages/Home/about";
-import Services from "./pages/Home/services";
-import Why from "./pages/Home/why";
-import RegisterWorker from "./auth/register/Worker";
-import RegisterEmployer from "./auth/register/Employer";
-import WorkerLogin from "./auth/login/Worker";
-import EmployerLogin from "./auth/login/Employer";
-import AdminLogin from "./auth/login/Admin/AdminLogin";
-import ForgotPassword from "./auth/ForgotPassword";
-import ResetPasswordConfirm from "./auth/ResetPasswordConfirm";
-import ContactUs from "./layout/ContactUs";
-import MaintenancePage from "./pages/MaintenancePage";
+// Lazy Loaded Public & Auth Pages
+const Home = lazy(() => import("./pages/Home/Home"));
+const About = lazy(() => import("./pages/Home/about"));
+const Services = lazy(() => import("./pages/Home/services"));
+const Why = lazy(() => import("./pages/Home/why"));
+const RegisterWorker = lazy(() => import("./auth/register/Worker"));
+const RegisterEmployer = lazy(() => import("./auth/register/Employer"));
+const WorkerLogin = lazy(() => import("./auth/login/Worker"));
+const EmployerLogin = lazy(() => import("./auth/login/Employer"));
+const AdminLogin = lazy(() => import("./auth/login/Admin/AdminLogin"));
+const ForgotPassword = lazy(() => import("./auth/ForgotPassword"));
+const ResetPasswordConfirm = lazy(() => import("./auth/ResetPasswordConfirm"));
+const ContactUs = lazy(() => import("./layout/ContactUs"));
+const MaintenancePage = lazy(() => import("./pages/MaintenancePage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Dashboard & Protected Pages
-import Worker from "./components/worker";
-import Employer from "./components/employer";
-import WorkerDirectory from "./pages/Dashboard/WorkerDirectory";
-import AdminDashboard from "./pages/admin/Dashboard";
-import UserManagement from "./pages/admin/UserManagement";
-import VerificationPage from "./pages/admin/Verification";
-import PaymentReview from "./pages/admin/PaymentReview";
+// Lazy Loaded Dashboard & Protected Pages
+const Worker = lazy(() => import("./components/worker"));
+const Employer = lazy(() => import("./components/employer"));
+const WorkerDirectory = lazy(() => import("./pages/Dashboard/WorkerDirectory"));
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
+const VerificationPage = lazy(() => import("./pages/admin/Verification"));
+const PaymentReview = lazy(() => import("./pages/admin/PaymentReview"));
+const PaymentVerification = lazy(() => import("./pages/payment/PaymentVerification"));
 
 // Context & Protection
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import PaymentVerification from "./pages/payment/PaymentVerification";
 import { EMPLOYER_LOGIN_ROUTE } from "./utils/authRoutes";
 
 // API Instance (Your fixed axios instance withCredentials: true)
 import api from "./api/axios";
+
+// Fallback Loader
+const PageLoader = () => (
+  <div className="flex min-h-[50vh] w-full items-center justify-center">
+    <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-[#f3a82f]"></div>
+  </div>
+);
 
 function App() {
   const [maintenance, setMaintenance] = useState({ active: false, msg: "" });
@@ -92,97 +101,105 @@ function App() {
   }
 
   if (maintenance.active) {
-    return <MaintenancePage message={maintenance.msg} />;
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <MaintenancePage message={maintenance.msg} />
+      </Suspense>
+    );
   }
 
   return (
+    <HelmetProvider>
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          {/* --- 1. ADMIN AUTH (No Layout) --- */}
-          <Route path="/admin/login" element={<AdminLogin />} />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* --- 1. ADMIN AUTH (No Layout) --- */}
+            <Route path="/admin/login" element={<AdminLogin />} />
 
-          {/* --- 2. ADMIN SYSTEM (Uses AdminLayout Sidebar) --- */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRole="admin">
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="verify/:userId" element={<VerificationPage />} />
-            <Route path="payments" element={<PaymentReview />} />
-          </Route>
+            {/* --- 2. ADMIN SYSTEM (Uses AdminLayout Sidebar) --- */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRole="admin">
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="verify/:userId" element={<VerificationPage />} />
+              <Route path="payments" element={<PaymentReview />} />
+            </Route>
 
-          {/* --- 3. PUBLIC & CLIENT SECTION (Uses Header/Footer) --- */}
-          <Route
-            path="/*"
-            element={
-              <>
-                <Header />
-                <main className="page-container min-h-[calc(100vh-160px)]">
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<Home />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/why-kykam" element={<Why />} />
-                    <Route path="/contact" element={<ContactUs />} />
-                    <Route path="/payment/verify" element={<PaymentVerification />} />
+            {/* --- 3. PUBLIC & CLIENT SECTION (Uses Header/Footer) --- */}
+            <Route
+              path="/*"
+              element={
+                <>
+                  <Header />
+                  <main className="page-container min-h-[calc(100vh-160px)]">
+                    <Routes>
+                      {/* Public Routes */}
+                      <Route path="/" element={<Home />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/services" element={<Services />} />
+                      <Route path="/why-kykam" element={<Why />} />
+                      <Route path="/contact" element={<ContactUs />} />
+                      <Route path="/payment/verify" element={<PaymentVerification />} />
 
-                    {/* Auth Routes */}
-                    <Route path="/login" element={<Navigate to={EMPLOYER_LOGIN_ROUTE} replace />} />
-                    <Route path="/login/worker" element={<WorkerLogin />} />
-                    <Route path="/login/employer" element={<EmployerLogin />} />
-                    <Route path="/register/worker" element={<RegisterWorker />} />
-                    <Route path="/register/employer" element={<RegisterEmployer />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password/:uid/:token" element={<ResetPasswordConfirm />} />
+                      {/* Auth Routes */}
+                      <Route path="/login" element={<Navigate to={EMPLOYER_LOGIN_ROUTE} replace />} />
+                      <Route path="/login/worker" element={<WorkerLogin />} />
+                      <Route path="/login/employer" element={<EmployerLogin />} />
+                      <Route path="/register/worker" element={<RegisterWorker />} />
+                      <Route path="/register/employer" element={<RegisterEmployer />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password/:uid/:token" element={<ResetPasswordConfirm />} />
 
-                    {/* Private Worker Routes */}
-                    <Route
-                      path="/worker/dashboard"
-                      element={
-                        <ProtectedRoute allowedRole="worker">
-                          <Worker />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="/dashboard/worker" element={<Navigate to="/worker/dashboard" replace />} />
+                      {/* Private Worker Routes */}
+                      <Route
+                        path="/worker/dashboard"
+                        element={
+                          <ProtectedRoute allowedRole="worker">
+                            <Worker />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/dashboard/worker" element={<Navigate to="/worker/dashboard" replace />} />
 
-                    {/* Private Employer Routes */}
-                    <Route
-                      path="/employer/dashboard"
-                      element={
-                        <ProtectedRoute allowedRole="employer">
-                          <Employer />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="/dashboard/employer" element={<Navigate to="/employer/dashboard" replace />} />
-                    <Route
-                      path="/dashboard/workerDir"
-                      element={
-                        <ProtectedRoute allowedRole="employer">
-                          <WorkerDirectory />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Private Employer Routes */}
+                      <Route
+                        path="/employer/dashboard"
+                        element={
+                          <ProtectedRoute allowedRole="employer">
+                            <Employer />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/dashboard/employer" element={<Navigate to="/employer/dashboard" replace />} />
+                      <Route
+                        path="/dashboard/workerDir"
+                        element={
+                          <ProtectedRoute allowedRole="employer">
+                            <WorkerDirectory />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* 404 Redirect */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </main>
-                <Footer />
-              </>
-            }
-          />
-        </Routes>
+                      {/* 404 Page */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </main>
+                  <Footer />
+                </>
+              }
+            />
+          </Routes>
+        </Suspense>
       </AuthProvider>
     </BrowserRouter>
+    </HelmetProvider>
   );
 }
 

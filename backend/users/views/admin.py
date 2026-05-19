@@ -6,7 +6,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import  IsAdminUser,AllowAny, IsAuthenticated
+from rest_framework.permissions import  AllowAny, IsAuthenticated
+from ..permissions import IsAdminRole
 
 from ..models import VerificationLog, Booking, Category, PlatformSetting, AdminNotification
 from ..serializers import (
@@ -16,8 +17,8 @@ from ..utils import send_verification_email
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework import views, status, permissions
 from rest_framework.response import Response
-from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
+from users.email_service import send_resend_email
 from django.conf import settings
 
 
@@ -25,7 +26,7 @@ User = get_user_model()
 
 class AdminUserManagementViewSet(viewsets.ModelViewSet):
     serializer_class = AdminUserDetailSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     filter_backends = [drf_filters.SearchFilter]
     search_fields = ['username', 'phone', 'id_number', 'first_name', 'last_name']
 
@@ -87,7 +88,7 @@ class AdminUserManagementViewSet(viewsets.ModelViewSet):
         return Response({'status': 'User moved to trash'})
 
 class AdminHiringRegistryViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     queryset = Booking.objects.select_related('employer', 'worker').all().order_by('-created_at')
     authentication_classes = [TokenAuthentication, SessionAuthentication]
 
@@ -124,7 +125,7 @@ class AdminHiringRegistryViewSet(viewsets.ModelViewSet):
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """Manages Job Categories"""
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = CategorySerializer 
     queryset = Category.objects.all()
 
@@ -162,7 +163,7 @@ class PlatformSettingsView(APIView):
     def get_permissions(self):
         if self.request.method == 'GET':
             return [permissions.AllowAny()]
-        return [permissions.IsAdminUser()]
+        return [IsAdminRole()]
 
     def get(self, request):
         settings = PlatformSetting.objects.first()
@@ -222,7 +223,7 @@ class AdminUserPasswordResetView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 class AdminPermanentDeleteUserView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminRole]
 
     def delete(self, request, user_id):
         try:
@@ -280,16 +281,14 @@ class ContactUsView(APIView):
         text_content = strip_tags(html_content)
 
         try:
-            msg = EmailMultiAlternatives(
-                full_subject,
-                text_content,
-                settings.DEFAULT_FROM_EMAIL, 
-                [settings.DEFAULT_FROM_EMAIL] 
+            send_resend_email(
+                subject=full_subject,
+                text_content=text_content,
+                html_content=html_content,
+                to_email=settings.DEFAULT_FROM_EMAIL,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                reply_to=sender_email
             )
-            # This allows you to click 'Reply' in your Gmail and email the user back directly
-            msg.extra_headers = {'Reply-To': sender_email}
-            msg.attach_alternative(html_content, "text/html")
-            msg.send()
 
             return Response({"success": "Your message has been received. We will get back to you soon!"})
         except Exception as e:
@@ -297,7 +296,7 @@ class ContactUsView(APIView):
 
 
 class AdminNotificationListView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminRole]
     authentication_classes = [TokenAuthentication, SessionAuthentication]
 
     def get(self, request):
@@ -315,7 +314,7 @@ class AdminNotificationListView(APIView):
         return Response(data)
 
 class AdminNotificationMarkReadView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminRole]
     authentication_classes = [TokenAuthentication, SessionAuthentication]
 
     def post(self, request, pk):

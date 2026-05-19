@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import api from '../api/axios';
+import { Helmet } from 'react-helmet-async';
 
 const ContactUs = () => {
     const [formData, setFormData] = useState({
@@ -35,6 +36,17 @@ const ContactUs = () => {
     };
 
     return (
+        <>
+        <Helmet>
+            <title>Contact Kykam Agencies — Get Help Finding Domestic Workers in Kenya</title>
+            <meta name="description" content="Reach out to Kykam Agencies for help finding verified househelps, nannies or cooks across Kenya, or for support with your worker profile. We respond within 24 hours." />
+            <link rel="canonical" href="https://kykamagencies.co.ke/contact" />
+            <meta property="og:title" content="Contact Kykam Agencies" />
+            <meta property="og:description" content="Get support for hiring domestic workers or managing your Kykam worker profile. We're here to help." />
+            <meta property="og:url" content="https://kykamagencies.co.ke/contact" />
+            <meta name="twitter:title" content="Contact Kykam Agencies" />
+            <meta name="twitter:description" content="Reach out to Kenya's trusted domestic worker marketplace for support and hiring help." />
+        </Helmet>
         <div className="max-w-xl mx-auto py-10 md:py-14 px-4 sm:px-6">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-2">
                 Contact Kykam Agencies
@@ -104,6 +116,7 @@ const ContactUs = () => {
                 </button>
             </form>
         </div>
+        </>
     );
 };
 

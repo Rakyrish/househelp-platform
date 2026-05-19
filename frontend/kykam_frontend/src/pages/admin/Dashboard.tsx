@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axios';
 import gsap from 'gsap';
 import UserTable from '../../components/admin/UserTable';
 import HiringRegistry from './HiringRegistry'; 
@@ -16,8 +16,6 @@ import {
 } from '@ant-design/icons';
 import {message} from 'antd'
 
-const { TabPane } = Tabs;
-
 interface DashboardStats {
   total_users: number;
   pending: number;
@@ -28,8 +26,6 @@ interface DashboardStats {
   active_hires: number; // New metric
 }
 
-const API = import.meta.env.VITE_API_BASE_URL;
-
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [users, setUsers] = useState([]);
@@ -37,36 +33,35 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchHires = async () => {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      message.error("Session expired. Please log in again.");
-      return;
+    try {
+      setLoading(true);
+      const res = await api.get(`/admin/manage-hires/`);
+      const data = res.data.results || res.data;
+      setHires(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch hires:", err);
+    } finally {
+      setLoading(false);
     }
-    const config = {
-      headers: { Authorization: `Token ${token}` },
-    };
-  setLoading(true);
-  const res = await axios.get(`'${API}/api/admin/manage-hires/'`, config);
-  setHires(res.data);
-  setLoading(false);
-};
+  };
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Token ${token}` };
       
       const [statsRes, usersRes, hiresRes] = await Promise.all([
-        axios.get(`${API}/api/admin/manage-users/stats/`, { headers }),
-        axios.get(`${API}/api/admin/manage-users/`, { headers }),
-        axios.get(`${API}/api/admin/manage-hires/`, { headers }) // Endpoint for the registry
+        api.get(`/admin/manage-users/stats/`),
+        api.get(`/admin/manage-users/`),
+        api.get(`/admin/manage-hires/`) // Endpoint for the registry
       ]);
       
       setStats(statsRes.data);
-      setUsers(usersRes.data);
-      setHires(hiresRes.data);
+      
+      const uData = usersRes.data.results || usersRes.data;
+      setUsers(Array.isArray(uData) ? uData : []);
+      
+      const hData = hiresRes.data.results || hiresRes.data;
+      setHires(Array.isArray(hData) ? hData : []);
       
       gsap.from(".stat-card", {
         opacity: 0,
@@ -76,8 +71,6 @@ const Dashboard = () => {
         ease: "power2.out"
       });
     } catch (err) {
-      console.log("Dashboard sync error:", err);
-      
       console.error("Dashboard sync error:", err);
     } finally {
       setLoading(false);
@@ -144,62 +137,70 @@ const Dashboard = () => {
 
       {/* Main Content Tabs */}
       <div className="dashboard-card bg-white/[0.02] border border-white/5 rounded-2xl sm:rounded-3xl overflow-hidden">
-        <Tabs defaultActiveKey="1" className="admin-tabs" tabBarStyle={{ padding: '0 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto' }}>
-          <TabPane 
-            tab={<span className="flex items-center gap-2"><TeamOutlined />Member Directory</span>} 
-            key="1"
-          >
-            <div className="p-3 sm:p-6 overflow-x-auto">
-               <UserTable users={users} />
-            </div>
-          </TabPane>
-          
-          <TabPane 
-            tab={<span className="flex items-center gap-2"><SafetyCertificateOutlined />Hiring Registry</span>} 
-            key="2"
-          >
-            <div className="p-3 sm:p-6 overflow-x-auto">
-              <HiringRegistry hires={hires} loading={false} refreshData={fetchHires} />
-            </div>
-          </TabPane>
-          
-          <TabPane 
-            tab={<span className="flex items-center gap-2"><BarChartOutlined />Platform Alerts</span>} 
-            key="3"
-          >
-            <div className="p-3 sm:p-6 space-y-4 max-w-2xl">
-                {stats && stats.pending > 0 && (
-                  <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div>
-                        <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">Verification Queue</p>
-                        <p className="text-sm text-slate-300 mt-1">{stats.pending} users are awaiting identity verification.</p>
-                    </div>
-                    <button className="text-xs font-bold text-amber-500 underline">Resolve Now</button>
-                  </div>
-                )}
-                <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
-                    <p className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Startup Tip</p>
-                    <p className="text-sm text-slate-300 mt-1">Payments are currently handled offline. Use the Hiring Registry to monitor if users are following through with their engagements.</p>
+        <Tabs 
+          defaultActiveKey="1" 
+          className="admin-tabs" 
+          tabBarStyle={{ padding: '0 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto' }}
+          items={[
+            {
+              key: '1',
+              label: <span className="flex items-center gap-2"><TeamOutlined />Member Directory</span>,
+              children: (
+                <div className="p-3 sm:p-6 overflow-x-auto">
+                  <UserTable users={users} />
                 </div>
-            </div>
-          </TabPane>
-          <TabPane 
-            tab={<span className="flex items-center gap-2"><AppstoreOutlined />Categories</span>} 
-            key="4"
-          >
-            <div className="p-3 sm:p-6">
-              <CategoryManager />
-            </div>
-          </TabPane>
-          <TabPane 
-          tab={<span className="flex items-center gap-2"><SettingOutlined />System Settings</span>} 
-          key="5"
-        >
-          <div className="p-3 sm:p-10">
-            <PlatformSettings />
-          </div>
-        </TabPane>
-        </Tabs>
+              ),
+            },
+            {
+              key: '2',
+              label: <span className="flex items-center gap-2"><SafetyCertificateOutlined />Hiring Registry</span>,
+              children: (
+                <div className="p-3 sm:p-6 overflow-x-auto">
+                  <HiringRegistry hires={hires} loading={false} refreshData={fetchHires} />
+                </div>
+              ),
+            },
+            {
+              key: '3',
+              label: <span className="flex items-center gap-2"><BarChartOutlined />Platform Alerts</span>,
+              children: (
+                <div className="p-3 sm:p-6 space-y-4 max-w-2xl">
+                  {stats && stats.pending > 0 && (
+                    <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div>
+                          <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">Verification Queue</p>
+                          <p className="text-sm text-slate-300 mt-1">{stats.pending} users are awaiting identity verification.</p>
+                      </div>
+                      <button className="text-xs font-bold text-amber-500 underline">Resolve Now</button>
+                    </div>
+                  )}
+                  <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
+                      <p className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Startup Tip</p>
+                      <p className="text-sm text-slate-300 mt-1">Payments are currently handled offline. Use the Hiring Registry to monitor if users are following through with their engagements.</p>
+                  </div>
+                </div>
+              ),
+            },
+            {
+              key: '4',
+              label: <span className="flex items-center gap-2"><AppstoreOutlined />Categories</span>,
+              children: (
+                <div className="p-3 sm:p-6">
+                  <CategoryManager />
+                </div>
+              ),
+            },
+            {
+              key: '5',
+              label: <span className="flex items-center gap-2"><SettingOutlined />System Settings</span>,
+              children: (
+                <div className="p-3 sm:p-10">
+                  <PlatformSettings />
+                </div>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <style>{`

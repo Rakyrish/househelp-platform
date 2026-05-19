@@ -1,5 +1,18 @@
+import { Helmet } from 'react-helmet-async';
+
 function Services() {
   return (
+    <>
+      <Helmet>
+        <title>Domestic Worker Services in Kenya — Nannies, Cooks &amp; Cleaners | Kykam Agencies</title>
+        <meta name="description" content="Browse all domestic staffing services offered by Kykam Agencies across Kenya. Find verified nannies, housemaids, cooks, house cleaners, gardeners and elderly carers." />
+        <link rel="canonical" href="https://kykamagencies.co.ke/services" />
+        <meta property="og:title" content="Domestic Worker Services in Kenya — Kykam Agencies" />
+        <meta property="og:description" content="Verified nannies, cooks, housemaids, cleaners, gardeners and elderly carers across all 47 counties of Kenya." />
+        <meta property="og:url" content="https://kykamagencies.co.ke/services" />
+        <meta name="twitter:title" content="Domestic Worker Services in Kenya — Kykam Agencies" />
+        <meta name="twitter:description" content="Find verified domestic workers across all 47 counties of Kenya. Free for employers." />
+      </Helmet>
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50 to-slate-100 py-16 px-4 sm:px-6 md:py-24">
 
       {/* Visual Background Accents */}
@@ -55,6 +68,7 @@ function Services() {
         </div>
       </div>
     </section>
+    </>
   );
 }
 

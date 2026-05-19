@@ -2,8 +2,8 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from users.email_service import send_resend_email
 from django.utils.encoding import force_bytes, force_str
-from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse
@@ -14,7 +14,8 @@ from rest_framework import generics, status, filters as drf_filters
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from ..permissions import IsAdminRole
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.authentication import TokenAuthentication
@@ -265,12 +266,10 @@ class PasswordResetRequestView(APIView):
             reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
             
             try:
-                send_mail(
-                    "Password Reset Request",
-                    f"Click the link below to reset your password:\n{reset_url}",
-                    settings.DEFAULT_FROM_EMAIL,
-                    [email],
-                    fail_silently=False,
+                send_resend_email(
+                    subject="Password Reset Request",
+                    text_content=f"Click the link below to reset your password:\n{reset_url}",
+                    to_email=email
                 )
             except Exception as e:
                 return Response({"error": f"Mail system error: {str(e)}"}, status=500)
@@ -298,7 +297,7 @@ class PasswordResetConfirmView(APIView):
         return Response({"error": "Invalid or expired link."}, status=status.HTTP_400_BAD_REQUEST)
 
 class SoftDeleteUserView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminRole]
     authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def patch(self, request, user_id):
@@ -316,7 +315,7 @@ class SoftDeleteUserView(APIView):
         return Response({"message": "User moved to trash successfully."}, status=status.HTTP_200_OK)
 
 class PermanentDeleteUserView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminRole]
     authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def delete(self, request, user_id):

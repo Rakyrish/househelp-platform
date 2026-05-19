@@ -17,7 +17,10 @@
 
 /* Optional: custom styles */
 html, body {
-  @apply bg-gray-100 font-sans w-full overflow-x-hidden;
+  @apply bg-gray-100 w-full overflow-x-hidden;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Ant Design Tabs: horizontal scroll on mobile */

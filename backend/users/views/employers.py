@@ -15,7 +15,7 @@ from ..serializers import (
 from ..utils import send_verification_email
 from django.shortcuts import get_object_or_404
 from django.db import transaction
-from django.core.mail import EmailMultiAlternatives
+from users.email_service import send_resend_email
 from django.utils.html import strip_tags
 
 User = get_user_model()
@@ -216,14 +216,18 @@ class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
         text_content = strip_tags(html_content)
 
         try:
-            msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
-            msg.attach_alternative(html_content, "text/html")
-            msg.send(fail_silently=False)
-            print(f"--- SUCCESS: Hire request email sent to {to} via SendGrid ---")
+            send_resend_email(
+                subject=subject,
+                text_content=text_content,
+                html_content=html_content,
+                to_email=to,
+                from_email=from_email
+            )
+            print(f"--- SUCCESS: Hire request email sent to {to} via Resend ---")
             print(f"email sending is {from_email}")
         except Exception as e:
             # We log the error but don't break the response for the user
-            print(f"--- SENDGRID ERROR: {str(e)} ---")
+            print(f"--- RESEND ERROR: {str(e)} ---")
 
         return Response({"message": "Hire request sent successfully!"})
 

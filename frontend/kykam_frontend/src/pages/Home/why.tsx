@@ -1,7 +1,19 @@
 import { ShieldCheck, Map, HandCoins } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 
 function Why() {
   return (
+    <>
+      <Helmet>
+        <title>Why Choose Kykam Agencies for Domestic Staffing in Kenya</title>
+        <meta name="description" content="Kykam verifies every worker's National ID, collects next-of-kin data, and manually reviews all applications. Discover why 1,200+ employers trust Kykam across Kenya." />
+        <link rel="canonical" href="https://kykamagencies.co.ke/why-kykam" />
+        <meta property="og:title" content="Why Choose Kykam Agencies — Verified Domestic Workers Kenya" />
+        <meta property="og:description" content="Every Kykam worker is ID-verified, background-traceable, and manually approved by our team. Free for employers." />
+        <meta property="og:url" content="https://kykamagencies.co.ke/why-kykam" />
+        <meta name="twitter:title" content="Why Choose Kykam Agencies" />
+        <meta name="twitter:description" content="Kenya's most trusted domestic worker verification platform." />
+      </Helmet>
     <section className="py-16 px-4 sm:px-6 md:py-24 text-center bg-slate-50 font-sans">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl sm:text-4xl md:text-[42px] text-slate-900 mb-4 font-extrabold leading-tight">
@@ -49,6 +61,7 @@ function Why() {
         </div>
       </div>
     </section>
+    </>
   );
 }
 

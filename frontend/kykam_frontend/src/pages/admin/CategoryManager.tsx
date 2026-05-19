@@ -8,9 +8,7 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined 
 } from '@ant-design/icons';
-import axios from 'axios';
-
-const API = import.meta.env.VITE_API_BASE_URL;
+import api from '../../api/axios';
 
 const CategoryManager = () => {
   const [categories, setCategories] = useState([]);
@@ -21,11 +19,9 @@ const CategoryManager = () => {
   // Load Categories
   const fetchCategories = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API}/api/admin/categories/`, {
-        headers: { Authorization: `Token ${token}` }
-      });
-      setCategories(res.data);
+      const res = await api.get(`/admin/categories/`);
+      const data = res.data.results || res.data;
+      setCategories(Array.isArray(data) ? data : []);
     } catch (err) {
       message.error("Failed to load categories");
     }
@@ -36,10 +32,8 @@ const CategoryManager = () => {
   // Handle Visibility Toggle (Quick Action)
   const toggleVisibility = async (id: number, currentStatus: boolean) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.patch(`${API}/api/admin/categories/${id}/`, 
-        { is_active: !currentStatus },
-        { headers: { Authorization: `Token ${token}` }}
+      await api.patch(`/admin/categories/${id}/`, 
+        { is_active: !currentStatus }
       );
       message.success("Category status updated");
       fetchCategories();

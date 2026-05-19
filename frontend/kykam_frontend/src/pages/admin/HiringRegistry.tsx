@@ -9,7 +9,7 @@ import {
   DeleteOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons';
-import axios from 'axios'; // Or your custom api instance
+import api from '../../api/axios'; // Custom api instance
 
 interface HireRecord {
   id: number;
@@ -19,8 +19,6 @@ interface HireRecord {
   created_at: string;
   worker_type: string;
 }
-
-const API = import.meta.env.VITE_API_BASE_URL;
 
 const HiringRegistry = ({ hires = [], loading, refreshData }: { 
   hires: HireRecord[], 
@@ -38,29 +36,17 @@ const HiringRegistry = ({ hires = [], loading, refreshData }: {
   );
 
 const handleAdminAction = async (id: number, action: 'approve' | 'withdraw' | 'complete') => {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      message.error("Session expired. Please log in again.");
-      return;
-    }
-
-    const config = {
-      headers: { Authorization: `Token ${token}` },
-    };
-
     setActionLoading(id);
 
     try {
       if (action === 'withdraw') {
-        await axios.delete(`${API}/api/admin/manage-hires/${id}/withdraw_request/`, config);
+        await api.delete(`/admin/manage-hires/${id}/withdraw_request/`);
         message.success("Engagement removed from registry.");
       } else {
         const statusMap = { approve: 'accepted', complete: 'completed' };
-        await axios.post(
-          `${API}/api/admin/manage-hires/${id}/force_action/`, 
-          { status: statusMap[action] }, 
-          config
+        await api.post(
+          `/admin/manage-hires/${id}/force_action/`, 
+          { status: statusMap[action] }
         );
         message.success(`Status updated to ${statusMap[action]}`);
       }

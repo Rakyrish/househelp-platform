@@ -1,5 +1,18 @@
+import { Helmet } from 'react-helmet-async';
+
 function About() {
   return (
+    <>
+      <Helmet>
+        <title>About Kykam Agencies — Kenya's Trusted Domestic Staffing Platform</title>
+        <meta name="description" content="Learn how Kykam Agencies is transforming domestic staffing in Kenya. Our mission is to connect verified, background-checked workers with families across all 47 counties." />
+        <link rel="canonical" href="https://kykamagencies.co.ke/about" />
+        <meta property="og:title" content="About Kykam Agencies — Kenya's Trusted Domestic Staffing Platform" />
+        <meta property="og:description" content="Kykam verifies every domestic worker using National ID and next-of-kin data. Find trusted househelps, nannies, cooks and more across Kenya." />
+        <meta property="og:url" content="https://kykamagencies.co.ke/about" />
+        <meta name="twitter:title" content="About Kykam Agencies" />
+        <meta name="twitter:description" content="Kenya's trusted domestic worker marketplace — verified workers across all 47 counties." />
+      </Helmet>
     <section className="font-sans bg-white py-16 px-6 md:py-24 md:px-12">
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-stretch gap-10 lg:gap-16 text-left">
         
@@ -43,6 +56,7 @@ function About() {
 
       </div>
     </section>
+    </>
   );
 }
 

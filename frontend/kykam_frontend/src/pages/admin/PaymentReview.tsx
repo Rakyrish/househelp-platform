@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axios';
 import { message } from 'antd';
 import { SyncOutlined } from '@ant-design/icons';
-
-const API = import.meta.env.VITE_API_BASE_URL;
 
 interface Payment {
     id: number;
@@ -28,14 +26,12 @@ const PaymentReview = () => {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<number | null>(null);
 
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Token ${token}` };
-
     const fetchPayments = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API}/api/admin/payments/`, { headers });
-            setPayments(res.data);
+            const res = await api.get(`/admin/payments/`);
+            const data = res.data.results || res.data;
+            setPayments(Array.isArray(data) ? data : []);
         } catch (err) {
             message.error("Failed to load payments.");
             console.error(err);
@@ -51,7 +47,7 @@ const PaymentReview = () => {
     const handleAction = async (id: number, action: 'approve' | 'reject') => {
         setActionLoading(id);
         try {
-            const res = await axios.post(`${API}/api/admin/payments/${id}/${action}/`, {}, { headers });
+            const res = await api.post(`/admin/payments/${id}/${action}/`);
             message.success(res.data.message);
             fetchPayments();
         } catch (err: any) {

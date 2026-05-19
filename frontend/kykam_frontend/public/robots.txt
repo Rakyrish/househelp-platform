@@ -1,4 +1,15 @@
 User-agent: *
 Allow: /
 
+# Block authenticated/private pages
+Disallow: /worker/dashboard
+Disallow: /employer/dashboard
+Disallow: /admin
+Disallow: /admin/login
+Disallow: /admin/users
+Disallow: /admin/payments
+Disallow: /payment/verify
+Disallow: /reset-password/
+
+# Sitemap location
 Sitemap: https://kykamagencies.co.ke/sitemap.xml

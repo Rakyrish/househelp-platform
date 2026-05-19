@@ -6,9 +6,8 @@ import {
   NotificationOutlined,
   GlobalOutlined
 } from '@ant-design/icons';
-import axios from 'axios';
+import api from '../../api/axios';
 
-const API = import.meta.env.VITE_API_BASE_URL;
 const PlatformSettings = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -18,7 +17,7 @@ const PlatformSettings = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const { data } = await axios.get(`${API}/api/admin-panel/platform-settings/`);
+        const { data } = await api.get(`/admin-panel/platform-settings/`);
         form.setFieldsValue(data);
       } catch (err) {
         message.error("Could not load current system status.");
@@ -32,11 +31,7 @@ const PlatformSettings = () => {
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      // Use relative path to leverage Vite Proxy
-      await axios.post(`${API}/api/admin-panel/platform-settings/`, values, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      await api.post(`/admin-panel/platform-settings/`, values);
       message.success("Platform configuration deployed live!");
     } catch (err) {
       message.error("Failed to update system settings. Check Admin permissions.");

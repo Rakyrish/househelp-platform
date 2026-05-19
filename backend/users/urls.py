@@ -65,8 +65,6 @@ urlpatterns = [
     path('admin/manage-users/<int:user_id>/permanent_erase/', views.AdminPermanentDeleteUserView.as_view(), name='admin-permanent-erase'),
     path('contact-us/', views.ContactUsView.as_view(), name='contact'),
     path('set-csrf/', views.set_csrf_token, name='set-csrf'),
-    path('contact-us/', views.ContactUsView.as_view()),
-    path("set-csrf/", views.set_csrf_token, name='set-csrf'),
 
     # Manual Payment Verification
     path("payment/submit/", SubmitManualPaymentView.as_view(), name="submit-manual-payment"),

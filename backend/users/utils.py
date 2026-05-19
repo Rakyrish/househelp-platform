@@ -1,4 +1,4 @@
-from django.core.mail import send_mail
+from .email_service import send_resend_email
 from django.template.loader import render_to_string
 
 def send_verification_email(worker, action, reasons=None, comment=None):
@@ -10,10 +10,8 @@ def send_verification_email(worker, action, reasons=None, comment=None):
         reason_text = "\n".join([f"- {r}" for r in reasons]) if reasons else ""
         message = f"Hello {worker.first_name},\n\nUnfortunately, we couldn't verify your documents for the following reasons:\n\n{reason_text}\n\nNotes: {comment}\n\nPlease log in and re-upload your documents."
 
-    send_mail(
-        subject,
-        message,
-        None, # Uses DEFAULT_FROM_EMAIL
-        [worker.email],
-        fail_silently=False,
+    send_resend_email(
+        subject=subject,
+        text_content=message,
+        to_email=worker.email
     )

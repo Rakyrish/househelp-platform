@@ -69,8 +69,8 @@ class User(AbstractUser):
     location = models.CharField(max_length=100, blank=True, null=True)
     age = models.CharField(max_length=3, blank=True, null=True)
     family_size = models.CharField(max_length=20, blank=True, null=True)
-    expected_salary = models.CharField(max_length=15, blank=True, null=True)
-    salary = models.CharField(max_length=15, blank=True, null=True)
+    expected_salary = models.IntegerField(blank=True, null=True)
+    salary = models.IntegerField(blank=True, null=True)
     
     # --- TRACEABILITY FIELDS ---
     id_number = models.CharField(max_length=50, unique=True, null=True, blank=True)

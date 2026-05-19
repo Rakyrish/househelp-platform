@@ -12,10 +12,13 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1"),
         "OPTIONS": { "CLIENT_CLASS": "django_redis.client.DefaultClient" }
     }
 }
+
+# Token expiry — explicitly set to 24 hours (was silently defaulting to 3600s)
+TOKEN_EXPIRED_AFTER_SECONDS = int(os.environ.get("TOKEN_EXPIRED_AFTER_SECONDS", 86400))
 
 MPESA_CONSUMER_KEY    = os.getenv("MPESA_CONSUMER_KEY")
 MPESA_CONSUMER_SECRET = os.getenv("MPESA_CONSUMER_SECRET")
@@ -63,11 +66,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'host.docker.internal',
-    "102.212.247.246",
-    'www.lucacare.co.ke',
-    'lucacare.co.ke',
-    '18db-197-136-183-18.ngrok-free.app',
-    '4247-2c0f-2d80-302-1800-e0fe-903e-d78a-8286.ngrok-free.app',
+    '102.212.247.246',
 ]
 
 # ✅ FIX: Must be True to allow CSRF and Session cookies to be sent back and forth
@@ -195,6 +194,11 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 # CSRF_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'
 # SESSION_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'
 
+# Security headers (applied in all environments)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -204,9 +208,10 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "onboarding@resend.dev")
 ADMIN_NOTIFICATION_EMAIL = os.getenv("ADMIN_NOTIFICATION_EMAIL") or "Kykamagency1@gmail.com"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SITE_ID = 1

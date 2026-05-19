@@ -2,19 +2,7 @@ import logging
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.utils import timezone
-from django.core.mail import send_mail
-from django.conf import settings
-import threading
-
-def send_email_async(subject, message, to_email):
-    def send():
-        try:
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@kykam.com')
-            send_mail(subject, message, from_email, [to_email], fail_silently=False)
-            logger.info("Email sent to %s with subject %s", to_email, subject)
-        except Exception as e:
-            logger.error(f"Failed to send email to {to_email}: {e}")
-    threading.Thread(target=send, daemon=True).start()
+from ..email_service import send_resend_email
 
 
 def get_admin_notification_email():
@@ -27,7 +15,8 @@ def get_admin_notification_email():
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from ..permissions import IsAdminRole
 from rest_framework.authentication import TokenAuthentication
 
 from ..authentication import CsrfExemptSessionAuthentication
@@ -91,9 +80,9 @@ class SubmitManualPaymentView(APIView):
 
         # Send email notification to user
         if user.email:
-            send_email_async(
+            send_resend_email(
                 subject="Payment Received",
-                message="Your payment of KES 99 has been received and is under review. You will be notified once verification is complete.",
+                text_content="Your payment of KES 99 has been received and is under review. You will be notified once verification is complete.",
                 to_email=user.email
             )
 
@@ -102,9 +91,9 @@ class SubmitManualPaymentView(APIView):
         message_body = f"A new payment has been submitted and is awaiting verification.\n\nUser: {user.first_name} {user.last_name}\nEmail: {user.email}\nPhone: {serializer.validated_data['phone_number']}\nTransaction Code: {serializer.validated_data['mpesa_transaction_code']}\nAmount: KES 99\n\nPlease review this payment in the admin dashboard."
         
         if admin_email:
-            send_email_async(
+            send_resend_email(
                 subject="New Payment Submitted — Action Required",
-                message=message_body,
+                text_content=message_body,
                 to_email=admin_email
             )
         else:
@@ -124,7 +113,7 @@ class SubmitManualPaymentView(APIView):
 
 class AdminPaymentListView(APIView):
     """List all manual payment submissions for admin review."""
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminRole]
     authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def get(self, request):
@@ -135,7 +124,7 @@ class AdminPaymentListView(APIView):
 
 class AdminPaymentApproveView(APIView):
     """Approve a manual payment and verify the user."""
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminRole]
     authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request, pk):
@@ -171,9 +160,9 @@ class AdminPaymentApproveView(APIView):
         logger.info(f"Payment {submission.id} approved by {request.user}. User {user} verified.")
         
         if user.email:
-            send_email_async(
+            send_resend_email(
                 subject="Account Verified",
-                message="Your account has been successfully verified. You now have full access.",
+                text_content="Your account has been successfully verified. You now have full access.",
                 to_email=user.email
             )
             
@@ -182,7 +171,7 @@ class AdminPaymentApproveView(APIView):
 
 class AdminPaymentRejectView(APIView):
     """Reject a manual payment submission."""
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminRole]
     authentication_classes = [CsrfExemptSessionAuthentication, TokenAuthentication]
 
     def post(self, request, pk):
@@ -212,9 +201,9 @@ class AdminPaymentRejectView(APIView):
         logger.info(f"Payment {submission.id} rejected by {request.user}.")
         
         if user.email:
-            send_email_async(
+            send_resend_email(
                 subject="Payment Failed",
-                message="Your payment could not be verified. Please try again.",
+                text_content="Your payment could not be verified. Please try again.",
                 to_email=user.email
             )
             

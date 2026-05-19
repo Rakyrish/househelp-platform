@@ -5,11 +5,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from .sitemaps import StaticViewSitemap
+from .sitemaps import StaticViewSitemap, WorkerProfileSitemap, LocationRoleSitemap
 from django.contrib.sitemaps.views import sitemap
 
 sitemaps = {
     'static': StaticViewSitemap,
+    'workers': WorkerProfileSitemap,
+    'locations': LocationRoleSitemap,
 }
 
 urlpatterns = [

@@ -3,6 +3,7 @@ import { message, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import TermsModal from "../../../components/TermsModal";
+import { Helmet } from "react-helmet-async";
 import {
   User, Mail, Lock, Phone, MapPin, Briefcase,
   IdCard, ShieldAlert, Upload, X, ArrowRight, DollarSign,
@@ -472,6 +473,11 @@ const RegisterWorker = () => {
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
     <>
+      <Helmet>
+        <title>Apply for Househelp & Nanny Jobs in Kenya — Kykam Agencies</title>
+        <meta name="description" content="Register on Kykam Agencies to find verified domestic worker jobs across Kenya. Connect directly with employers. Registration fee is KES 99." />
+        <link rel="canonical" href="https://kykamagencies.co.ke/register/worker" />
+      </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/20 to-slate-100 py-12 px-4 sm:px-6">
         <style>{`
         @keyframes fadeIn {

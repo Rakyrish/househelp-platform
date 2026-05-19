@@ -167,15 +167,6 @@ class LoginAdminSerializer(serializers.Serializer):
             )
 
         return user
-class AdminUserDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = [
-            'id', 'username', 'email', 'first_name', 'last_name', 'phone', 
-            'role', 'status', 'is_verified', 'id_number', 'family_size', 'salary', 'start_date',
-            'id_photo_front', 'id_photo_back', 'location', 'age',
-            'kin_name', 'kin_phone', 'worker_type', 'date_joined', 'passport_img', 'expected_salary', 'salary', 'requirements', 'accommodation'
-        ]
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking

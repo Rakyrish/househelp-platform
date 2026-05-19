@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.db.models import Count
 from django.utils.html import format_html
 from django.contrib import messages
-from django.core.mail import send_mail
 from django.conf import settings
+from users.email_service import send_resend_email
 from .models import User, Booking, Category, PlatformSetting, VerificationLog, PaymentTransaction, ManualPaymentSubmission
 
 # Customizing the Admin Header
@@ -117,12 +117,10 @@ class UserAdmin(admin.ModelAdmin):
             user.save(update_fields=['verification_status', 'status', 'is_verified', 'is_active', 'payment_submitted_at'])
             # Send Email to Worker
             try:
-                send_mail(
-                    "Account Verified - Kykam Agency",
-                    f"Hello {user.first_name}, your account has been verified! You are now visible to employers.",
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
-                    fail_silently=True,
+                send_resend_email(
+                    subject="Account Verified - Kykam Agency",
+                    text_content=f"Hello {user.first_name}, your account has been verified! You are now visible to employers.",
+                    to_email=user.email,
                 )
             except Exception:
                 pass

@@ -3,6 +3,7 @@ import { message, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import TermsModal from "../../../components/TermsModal";
+import { Helmet } from "react-helmet-async";
 import {
   User,
   Mail,
@@ -175,6 +176,11 @@ const RegisterEmployer = () => {
   return (
     // FIX 5: Fragment wrapper restored so TermsModal can be rendered outside the main div
     <>
+      <Helmet>
+        <title>Hire Verified Househelps & Nannies — Kykam Agencies</title>
+        <meta name="description" content="Register as an employer to hire vetted, background-checked domestic workers in Kenya. No placement fees. Find a reliable nanny, cook, or cleaner today." />
+        <link rel="canonical" href="https://kykamagencies.co.ke/register/employer" />
+      </Helmet>
       <div className="min-h-screen bg-[#f8fafc] py-12 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
           <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
