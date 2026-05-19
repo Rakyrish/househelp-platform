@@ -3,7 +3,7 @@ import api from '../../api/axios';
 import UserTable from '../../components/admin/UserTable';
 
 const UserManagement = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

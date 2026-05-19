@@ -11,7 +11,7 @@ import {
 import api from '../../api/axios';
 
 const CategoryManager = () => {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [form] = Form.useForm();

@@ -14,7 +14,6 @@ import {
   AppstoreOutlined,
   SettingOutlined
 } from '@ant-design/icons';
-import {message} from 'antd'
 
 interface DashboardStats {
   total_users: number;
@@ -28,8 +27,8 @@ interface DashboardStats {
 
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [users, setUsers] = useState([]);
-  const [hires, setHires] = useState([]); // Hiring Registry data
+  const [users, setUsers] = useState<any[]>([]);
+  const [hires, setHires] = useState<any[]>([]); // Hiring Registry data
   const [loading, setLoading] = useState(true);
 
   const fetchHires = async () => {
